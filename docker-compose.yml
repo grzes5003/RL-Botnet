@@ -1,0 +1,27 @@
+services:
+  m1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: image-infected
+    ports:
+      - 5050:80
+    networks:
+      netw:
+        ipv4_address: 10.0.0.11
+  m2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: image-clean
+    ports:
+      - 5051:81
+    networks:
+      netw:
+        ipv4_address: 10.0.0.12
+networks:
+  netw:
+    ipam:
+     config:
+       - subnet: 10.0.0.0/24
+         gateway: 10.0.0.1
