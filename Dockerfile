@@ -15,6 +15,7 @@ RUN apk add --no-cache openrc openssh python3 musl-dev libc-dev \
     && mkdir -p /run/openrc \
     && touch /run/openrc/softlevel
 
+ADD machines/basic_IoT /iot
 
 FROM base AS image-infected
 ADD worm /worm
@@ -23,4 +24,4 @@ ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /
 
 
 FROM base AS image-clean
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /iot/main.py; sleep infinity"]

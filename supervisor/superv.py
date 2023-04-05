@@ -10,7 +10,7 @@ machine_name = 'mgr-m1-1'
 proc_name = 'python'
 
 
-def get_container(clinet: DockerClient, name: str):
+def get_container(clinet: DockerClient = docker.from_env(), name: str = 'mgr-m1-1'):
     containers = [cont for cont in clinet.containers.list() if cont.name == name]
     match containers:
         case [container]:
