@@ -1,3 +1,4 @@
+cffi
 psutil
 python-nmap
 paramiko

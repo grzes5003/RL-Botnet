@@ -6,7 +6,7 @@ RUN echo "root:toor" | chpasswd
 
 #  build-base
 RUN apk add --no-cache openrc openssh python3 musl-dev libc-dev \
-    gcc py3-pip python3-dev linux-headers nmap nmap-scripts \
+    gcc libffi-dev py3-pip python3-dev linux-headers nmap nmap-scripts \
     && mkdir -p /root/.ssh \
     && chmod 0700 /root/.ssh \
     && ssh-keygen -A \

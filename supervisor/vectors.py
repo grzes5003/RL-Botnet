@@ -47,3 +47,19 @@ class Vecs:
     @staticmethod
     def into_df(arr: [Vecs]):
         return pd.DataFrame.from_records([item.to_dict() for item in arr])
+
+    @staticmethod
+    def diff(arr: [Vecs]):
+        """return difference between items from array"""
+        return [arr[i] - arr[i - 1] for i in range(1, len(arr))]
+
+    def __sub__(self, other: Vecs):
+        return Vecs(
+            rx_bytes=self.rx_bytes - other.rx_bytes,
+            tx_bytes=self.tx_bytes - other.tx_bytes,
+            rx_packets=self.rx_packets - other.rx_packets,
+            tx_packets=self.tx_packets - other.tx_packets,
+            ram_usage=self.ram_usage - other.ram_usage,
+            cpu_usage=self.cpu_usage - other.cpu_usage,
+            time=self.time
+        )

@@ -2,7 +2,7 @@ import docker
 from docker import DockerClient
 
 from supervisor import signals
-from vectors import Vecs
+from supervisor.vectors import Vecs
 
 client = docker.from_env()
 
@@ -10,7 +10,7 @@ machine_name = 'mgr-m1-1'
 proc_name = 'python'
 
 
-def get_container(clinet: DockerClient = docker.from_env(), name: str = 'mgr-m1-1'):
+def get_container(clinet: DockerClient = docker.from_env(), name: str = 'worm-docker-m1-1'):
     containers = [cont for cont in clinet.containers.list() if cont.name == name]
     match containers:
         case [container]:
@@ -33,8 +33,8 @@ def send_sig(cont, pid, sig: signals.Signals):
 
 
 if __name__ == '__main__':
-    cont = get_container(client, machine_name)
-    stats = cont.stats(stream=False)
+    cont = get_container(client)
+    stats = cont.stats(stream=True, decode=True)
     print(stats)
     c = Vecs.from_read(stats)
     ...
