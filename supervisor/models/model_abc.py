@@ -50,3 +50,7 @@ class ModelAbc(ABC):
     @property
     def total_observations(self):
         return self._balance
+
+    def reset(self):
+        self._total_anomalies = 0
+        self._balance = 0

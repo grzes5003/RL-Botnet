@@ -1,14 +1,19 @@
+
+
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 from supervisor.collector import collect_constant_data
 from supervisor.models.model_abc import ModelAbc
+from supervisor.signals import Signals
+from supervisor.superv import get_container, send_sig, tape
 from supervisor.vectors import Vecs
 
 
 class IsolationForestsImpl(ModelAbc):
     def __init__(self):
         super().__init__()
+        self.threshold = 10
 
     def learn(self, df: pd.DataFrame) -> IsolationForest:
         df = df.dropna()
@@ -23,7 +28,10 @@ class IsolationForestsImpl(ModelAbc):
     def listener(self):
         if self._model is None:
             raise ValueError('Model is not initialized')
-        records = collect_constant_data()
+        cont = get_container()
+        pid = tape(cont)
+        send_sig(cont, pid, Signals.START)
+        records = collect_constant_data(cont)
         while True:
             record = records.__next__()
             record = Vecs.into_df([record])
@@ -33,6 +41,11 @@ class IsolationForestsImpl(ModelAbc):
                 self.anomalies += 1
             self.inc_balance()
             print(self.balance, self.total_observations, self.anomalies)
+
+            # keep track of balance and reset if balance is above threshold
+            if self.balance > self.threshold:
+                send_sig(cont, pid, Signals.RESET)
+                self.reset()
 
 
 if __name__ == '__main__':

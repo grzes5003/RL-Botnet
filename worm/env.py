@@ -1,10 +1,9 @@
 import dataclasses
-import random
 import time
 
 import psutil
 
-from worm.action import ActionBot, Actions
+from action import ActionBot, Actions
 
 
 class Env:

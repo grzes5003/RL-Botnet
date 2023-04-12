@@ -2,4 +2,4 @@ cffi
 psutil
 python-nmap
 paramiko
-# numpy
+numpy

@@ -6,7 +6,7 @@ RUN echo "root:toor" | chpasswd
 
 #  build-base
 RUN apk add --no-cache openrc openssh python3 musl-dev libc-dev \
-    gcc libffi-dev py3-pip python3-dev linux-headers nmap nmap-scripts \
+    g++ libffi-dev py3-pip python3-dev linux-headers nmap nmap-scripts \
     && mkdir -p /root/.ssh \
     && chmod 0700 /root/.ssh \
     && ssh-keygen -A \
@@ -20,7 +20,7 @@ ADD machines/basic_IoT /iot
 FROM base AS image-infected
 ADD worm /worm
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /worm/script.py; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py; python /worm/agent.py; sleep infinity"]
 
 
 FROM base AS image-clean

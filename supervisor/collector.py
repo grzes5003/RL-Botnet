@@ -2,6 +2,7 @@ import os
 import time
 
 import pandas as pd
+from docker.models.resource import Model
 
 from supervisor.superv import get_container
 from supervisor.vectors import Vecs
@@ -20,8 +21,7 @@ def collect_data(time_limit: int):
     return Vecs.into_df(records)
 
 
-def collect_constant_data():
-    cont = get_container()
+def collect_constant_data(cont=get_container()):
     records = collections.deque(2*[0], 2)
     stats = cont.stats(stream=True, decode=True)
 

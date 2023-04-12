@@ -1,4 +1,3 @@
-import os
 import random
 import subprocess
 from enum import Enum
@@ -35,7 +34,7 @@ class ActionBot:
         pass
 
     def reset(self):
-        if self.ping_proc.poll() is None:
+        if self.ping_proc is not None and self.ping_proc.poll() is None:
             self.ping_proc.kill()
             self.ping_proc = None
 
