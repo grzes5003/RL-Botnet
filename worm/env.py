@@ -1,4 +1,5 @@
 import dataclasses
+import threading
 import time
 
 import psutil
@@ -10,12 +11,15 @@ class Env:
 
     @dataclasses.dataclass
     class ObservationSpace:
-        low = [0, 0, 0, -10000, 0]
-        high = [100, 100, 10, 10000, 1500000]
+        low = [0, 0, 0, 0, -10000, 0]
+        high = [100, 100, 10, 10, 10000, 1500000]
 
     def __init__(self):
         self._n = 6
         self.action_space = ActionBot()
+        self.observation = None
+        self.fetcher_handle = self.observer()
+        self.fetcher_handle.start()
 
     @staticmethod
     def cpu_usage():
@@ -38,6 +42,21 @@ class Env:
     @staticmethod
     def get_env():
         return *Env.net_bytes(), *Env.net_packets(), Env.ram_usage(), Env.cpu_usage()
+
+    def diff_observation(self, other):
+        """substracts two tuples of observations"""
+        return tuple(map(lambda x, y: x - y, self.observation, other))
+
+    def observer(self):
+        def fetcher():
+            while True:
+                yield self.get_env()
+                self.observation = self.get_env() \
+                    if self.observation is None \
+                    else self.diff_observation(self.get_env())
+                print(self.observation)
+                time.sleep(.5)
+        return threading.Thread(target=fetcher)
 
     def sample(self):
         return self.action_space.sample()

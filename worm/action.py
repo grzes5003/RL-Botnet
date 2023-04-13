@@ -27,7 +27,7 @@ class ActionBot:
         self.ping_proc: subprocess.Popen = None
 
     def ping_action(self):
-        self.ping_proc = subprocess.Popen(f'ping -c 5 10.0.0.12')
+        self.ping_proc = subprocess.Popen(f'ping -c 5 10.0.0.12', shell=True)
 
     def none(self):
         """blank action"""

@@ -7,7 +7,7 @@ from supervisor.vectors import Vecs
 
 client = docker.from_env()
 
-machine_name = 'mgr-m1-1' # 'worm-docker-m1-1'
+machine_name = 'worm-docker-m1-1'   # 'mgr-m1-1'
 proc_name = 'python /worm/agent.py'
 
 

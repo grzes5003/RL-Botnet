@@ -49,8 +49,12 @@ class Agent:
         print('Agent initialized...')
 
     def discretize_state(self, obs):
+        obs = list(obs)
         discretized = list()
         for i in range(len(obs)):
+            obs[i] = min(obs[i], self.upper_bounds[i])
+            obs[i] = max(obs[i], self.lower_bounds[i])
+
             scaling = (obs[i] + abs(self.lower_bounds[i])) / (self.upper_bounds[i] - self.lower_bounds[i])
             new_obs = int(round((self.buckets[i] - 1) * scaling))
             new_obs = min(self.buckets[i] - 1, max(0, new_obs))
@@ -84,7 +88,7 @@ class Agent:
 
             while not self.done:
                 action = self.choose_action(current_state)
-                obs, reward, _, _ = self.env.step(action)
+                obs, reward, _, _, _ = self.env.step(action)
                 new_state = self.discretize_state(obs)
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
