@@ -49,7 +49,6 @@ class Agent:
         print('Agent initialized...')
 
     def discretize_state(self, obs):
-        obs = list(obs)
         discretized = list()
         for i in range(len(obs)):
             obs[i] = min(obs[i], self.upper_bounds[i])
@@ -59,7 +58,10 @@ class Agent:
             new_obs = int(round((self.buckets[i] - 1) * scaling))
             new_obs = min(self.buckets[i] - 1, max(0, new_obs))
             discretized.append(new_obs)
-        return tuple(discretized)
+
+            # ob = np.digitize(obs[i], bins=np.linspace(self.lower_bounds[i], self.upper_bounds[i], self.buckets[i]))
+            # discretized.append(ob)
+        return np.array(discretized)
 
     def choose_action(self, state):
         if np.random.random() < self.epsilon:

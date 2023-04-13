@@ -2,6 +2,7 @@ import dataclasses
 import threading
 import time
 
+import numpy as np
 import psutil
 
 from action import ActionBot, Actions
@@ -18,6 +19,7 @@ class Env:
         self._n = 6
         self.action_space = ActionBot()
         self.observation = None
+        self.lock = threading.Lock()
         self.fetcher_handle = self.observer()
         self.fetcher_handle.start()
 
@@ -41,7 +43,7 @@ class Env:
 
     @staticmethod
     def get_env():
-        return *Env.net_bytes(), *Env.net_packets(), Env.ram_usage(), Env.cpu_usage()
+        return np.array([*Env.net_bytes(), *Env.net_packets(), Env.ram_usage(), Env.cpu_usage()])
 
     def diff_observation(self, other):
         """substracts two tuples of observations"""
@@ -53,7 +55,7 @@ class Env:
                 yield self.get_env()
                 self.observation = self.get_env() \
                     if self.observation is None \
-                    else self.diff_observation(self.get_env())
+                    else self.observation - self.get_env()
                 print(self.observation)
                 time.sleep(.5)
         return threading.Thread(target=fetcher)
