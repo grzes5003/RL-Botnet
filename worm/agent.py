@@ -30,6 +30,7 @@ class Agent:
                  decay=25):
         self.sig_handlers()
         self.env = env.Env()
+        self.env.observer()
 
         self.buckets = buckets
         self.num_episodes = num_episodes
@@ -58,10 +59,7 @@ class Agent:
             new_obs = int(round((self.buckets[i] - 1) * scaling))
             new_obs = min(self.buckets[i] - 1, max(0, new_obs))
             discretized.append(new_obs)
-
-            # ob = np.digitize(obs[i], bins=np.linspace(self.lower_bounds[i], self.upper_bounds[i], self.buckets[i]))
-            # discretized.append(ob)
-        return np.array(discretized)
+        return tuple(discretized)
 
     def choose_action(self, state):
         if np.random.random() < self.epsilon:
@@ -70,6 +68,7 @@ class Agent:
             return np.argmax(self.q_table[state])
 
     def update_q(self, state, action, reward, new_state):
+        state = tuple(state)
         self.q_table[state][action] += self.learning_rate * (
                     reward + self.discount * np.max(self.q_table[new_state]) - self.q_table[state][action])
 
@@ -83,6 +82,7 @@ class Agent:
         print('Training started...')
         for e in range(self.num_episodes):
             print(f'Episode {e} started...')
+            reward_sum = 0.0
             current_state = self.discretize_state(self.reset())
 
             self.learning_rate = self.get_learning_rate(e)
@@ -94,6 +94,8 @@ class Agent:
                 new_state = self.discretize_state(obs)
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
+                reward_sum += reward
+                print(f'{e}: {reward=}; {action=}')
         print('Training finished...')
 
     @staticmethod

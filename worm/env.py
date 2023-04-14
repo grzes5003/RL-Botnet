@@ -1,3 +1,4 @@
+import collections
 import dataclasses
 import threading
 import time
@@ -9,7 +10,6 @@ from action import ActionBot, Actions
 
 
 class Env:
-
     @dataclasses.dataclass
     class ObservationSpace:
         low = [0, 0, 0, 0, -10000, 0]
@@ -33,12 +33,12 @@ class Env:
 
     @staticmethod
     def net_packets():
-        return psutil.net_io_counters().packets_recv,\
+        return psutil.net_io_counters().packets_recv, \
             psutil.net_io_counters().packets_sent
 
     @staticmethod
     def net_bytes():
-        return psutil.net_io_counters().bytes_recv,\
+        return psutil.net_io_counters().bytes_recv, \
             psutil.net_io_counters().bytes_sent
 
     @staticmethod
@@ -51,14 +51,20 @@ class Env:
 
     def observer(self):
         def fetcher():
+            records = collections.deque(2 * [None], 2)
+
             while True:
-                yield self.get_env()
-                self.observation = self.get_env() \
-                    if self.observation is None \
-                    else self.observation - self.get_env()
-                print(self.observation)
+                records.appendleft(self.get_env())
+                if records[1] is None:
+                    continue
+                with self.lock:
+                    self.observation = records[0] - records[1]
                 time.sleep(.5)
-        return threading.Thread(target=fetcher)
+
+        return threading.Thread(target=fetcher, daemon=True)
+
+    def get_obs_diff(self):
+        return self.observation - self.get_env()
 
     def sample(self):
         return self.action_space.sample()
@@ -66,11 +72,11 @@ class Env:
     def action(self, action):
         return self.action_space.action(action)
 
-    def step(self, action: Actions):
+    def step(self, action: int):
         self.action_space.action(action)
         time.sleep(.5)
 
-        reward = action.action_reward()  # Binary sparse rewards
+        reward = Actions(action).action_reward()  # Binary sparse rewards
         observation = self._get_obs()
         info = self._get_info()
 
@@ -84,11 +90,10 @@ class Env:
         return observation
 
     def _get_obs(self):
-        # return {"agent": self._agent_location, "target": self._target_location}
-        return self.get_env()
+        with self.lock:
+            return self.observation
 
     def _get_info(self):
-        # return {"distance": np.linalg.norm(self._agent_location - self._target_location, ord=1)}
         return {}
 
     def observation_space(self):
@@ -97,3 +102,8 @@ class Env:
     @property
     def n(self):
         return self._n
+
+
+if __name__ == '__main__':
+    env = Env()
+    threading.Event().wait()

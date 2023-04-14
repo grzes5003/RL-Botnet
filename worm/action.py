@@ -9,7 +9,7 @@ class Actions(Enum):
 
     @classmethod
     def sample(cls):
-        return random.choice(list(cls))
+        return random.choice(list(cls)).value
 
     def action_reward(self):
         match self:
@@ -43,13 +43,13 @@ class ActionBot:
         """returns action method"""
         return Actions.sample()
 
-    def action(self, action: Actions):
+    def action(self, action: int):
         """calls action method based on action int"""
         match action:
-            case Actions.PING:
+            case Actions.PING.value:
                 if self.ping_proc is None:
                     self.ping_action()
-            case Actions.NONE:
+            case Actions.NONE.value:
                 self.none()
             case _:
                 raise ValueError(f'Action {action} not found')
