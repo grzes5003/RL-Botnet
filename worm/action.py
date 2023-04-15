@@ -1,5 +1,6 @@
 import random
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 
 
@@ -24,10 +25,15 @@ class Actions(Enum):
 class ActionBot:
 
     def __init__(self):
+        self.thread_pool = ThreadPoolExecutor(max_workers=1)
         self.ping_proc: subprocess.Popen = None
 
     def ping_action(self):
-        self.ping_proc = subprocess.Popen(f'ping -c 5 10.0.0.12', shell=True)
+        print('pinging...')
+        self.ping_proc = subprocess.Popen(f'ping -c 5 10.0.0.12', shell=True, stdout=subprocess.DEVNULL)
+        self.ping_proc.wait()
+        self.ping_proc = None
+        print('pinged')
 
     def none(self):
         """blank action"""
@@ -48,7 +54,7 @@ class ActionBot:
         match action:
             case Actions.PING.value:
                 if self.ping_proc is None:
-                    self.ping_action()
+                    self.thread_pool.submit(self.ping_action)
             case Actions.NONE.value:
                 self.none()
             case _:

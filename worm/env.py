@@ -85,7 +85,6 @@ class Env:
     def reset(self):
         self.action_space.reset()
         observation = self._get_obs()
-        info = self._get_info()
 
         return observation
 

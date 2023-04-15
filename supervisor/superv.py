@@ -1,3 +1,4 @@
+import platform
 import re
 import docker
 from docker import DockerClient
@@ -7,7 +8,7 @@ from supervisor.vectors import Vecs
 
 client = docker.from_env()
 
-machine_name = 'worm-docker-m1-1'   # 'mgr-m1-1'
+machine_name = 'worm-docker-m1-1' if platform.system() != 'Windows' else 'mgr-m1-1'
 proc_name = 'python /worm/agent.py'
 
 

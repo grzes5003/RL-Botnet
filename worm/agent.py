@@ -1,4 +1,5 @@
 import math
+import platform
 import random
 import signal
 import threading
@@ -19,11 +20,12 @@ class Agent:
 
     def handle_sigusr2(self, *_):
         print('got SIGUSR2')
-        self.reset()
+        self.done = True
 
     def sig_handlers(self):
-        signal.signal(signal.SIGUSR1, self.handle_sigusr1)
-        signal.signal(signal.SIGUSR2, self.handle_sigusr2)
+        if platform.system() == 'Linux':
+            signal.signal(signal.SIGUSR1, self.handle_sigusr1)
+            signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
     def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=100, min_lr=0.1, min_epsilon=0.1, discount=1.0,
@@ -95,7 +97,7 @@ class Agent:
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
                 reward_sum += reward
-                print(f'{e}: {reward=}; {action=}')
+                print(f'{e}: {reward=}; {action=}, {reward_sum=}')
         print('Training finished...')
 
     @staticmethod

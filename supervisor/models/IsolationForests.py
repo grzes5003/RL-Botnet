@@ -13,7 +13,7 @@ from supervisor.vectors import Vecs
 class IsolationForestsImpl(ModelAbc):
     def __init__(self):
         super().__init__()
-        self.threshold = 10
+        self.threshold = .5
 
     def learn(self, df: pd.DataFrame) -> IsolationForest:
         df = df.dropna()
