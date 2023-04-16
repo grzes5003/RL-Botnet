@@ -23,6 +23,8 @@ class Env:
         self.fetcher_handle = self.observer()
         self.fetcher_handle.start()
 
+        self.action_cooldown_dict = {action: 0 for action in Actions}
+
     @staticmethod
     def cpu_usage():
         return psutil.cpu_percent()
@@ -73,17 +75,33 @@ class Env:
         return self.action_space.action(action)
 
     def step(self, action: int):
-        self.action_space.action(action)
+        result = self.action_space.action(action)
         time.sleep(.5)
 
-        reward = Actions(action).action_reward()  # Binary sparse rewards
+        reward = Actions(action).action_reward() - self.action_cooldown(action)
+        if result == -1:
+            reward *= 0.5
+        elif result == -2:
+            reward = 0
         observation = self._get_obs()
         info = self._get_info()
 
         return observation, reward, False, False, info
 
+    def action_cooldown(self, action: int):
+        cooldown = 100
+        action_key = Actions(action)
+
+        current_time = time.time()
+        p_100 = Actions(action).action_reward()
+        cooldown_val = max(cooldown - current_time + self.action_cooldown_dict[action_key], 0)
+        self.action_cooldown_dict[action_key] = current_time
+
+        return p_100 * (cooldown_val / 100)
+
     def reset(self):
         self.action_space.reset()
+        time.sleep(.5)
         observation = self._get_obs()
 
         return observation

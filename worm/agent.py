@@ -97,7 +97,7 @@ class Agent:
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
                 reward_sum += reward
-                print(f'{e}: {reward=}; {action=}, {reward_sum=}')
+                print(f'log:{e}: {reward=}; {action=}, {reward_sum=}')
         print('Training finished...')
 
     @staticmethod

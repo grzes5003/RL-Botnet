@@ -14,14 +14,35 @@ services:
       context: .
       dockerfile: Dockerfile
       target: image-clean
+    privileged: true
     ports:
       - 5051:81
     networks:
       netw:
         ipv4_address: 10.0.0.12
+  honeypot:
+    build:
+      context: .
+      dockerfile: honeypot.Dockerfile
+    privileged: true
+    ports:
+      - 5052:81
+    networks:
+      netw:
+        priority: 1000
+        ipv4_address: 10.0.0.15
+      net1:
+        priority: 900
+      net2:
+        priority: 800
+      net3:
+        priority: 700
 networks:
   netw:
     ipam:
      config:
        - subnet: 10.0.0.0/24
          gateway: 10.0.0.1
+  net1:
+  net2:
+  net3:
