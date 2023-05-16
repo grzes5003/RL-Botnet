@@ -12,6 +12,9 @@ class ModelAbc(ABC):
         self._balance = 0
         self._model: OutlierMixin = None
 
+        self._limit = 20
+        self._observations = []
+
     @abstractmethod
     def learn(self, df: pd.DataFrame) -> OutlierMixin:
         raise NotImplementedError
@@ -35,6 +38,20 @@ class ModelAbc(ABC):
         self._total_anomalies = value
 
     @property
+    def observation(self):
+        print(self._observations)
+        if len(self._observations) == 0:
+            return 0
+        return sum(self._observations) / len(self._observations)
+
+    @observation.setter
+    def observation(self, value):
+        """updates list with fixed size of observations"""
+        if len(self._observations) >= self._limit:
+            self._observations.pop(0)
+        self._observations.append(value)
+
+    @property
     def balance(self):
         """property returning balance"""
         return 0 if self._balance == 0 else self._total_anomalies / self._balance
@@ -54,3 +71,4 @@ class ModelAbc(ABC):
     def reset(self):
         self._total_anomalies = 0
         self._balance = 0
+        self._observations = []

@@ -2,7 +2,9 @@ import math
 import platform
 import random
 import signal
+import sys
 import threading
+import unittest
 
 import numpy as np
 import env
@@ -28,8 +30,8 @@ class Agent:
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=100, min_lr=0.1, min_epsilon=0.1, discount=1.0,
-                 decay=25):
+    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=200, min_lr=0.1,
+                 min_epsilon=0.1, discount=1.0, decay=25):
         self.sig_handlers()
         self.env = env.Env()
         self.env.observer()
@@ -43,6 +45,8 @@ class Agent:
 
         self.epsilon = None
         self.done = False
+
+        self._qtable_file = 'qtable.csv'
 
         # [rx_bytes,tx_bytes,rx_packets,tx_packets,ram_usage,cpu_usage]
         self.upper_bounds = self.env.observation_space().high
@@ -72,7 +76,7 @@ class Agent:
     def update_q(self, state, action, reward, new_state):
         state = tuple(state)
         self.q_table[state][action] += self.learning_rate * (
-                    reward + self.discount * np.max(self.q_table[new_state]) - self.q_table[state][action])
+                reward + self.discount * np.max(self.q_table[new_state]) - self.q_table[state][action])
 
     def get_epsilon(self, t):
         return max(self.min_epsilon, min(1., 1. - math.log10((t + 1) / self.decay)))
@@ -99,15 +103,19 @@ class Agent:
                 reward_sum += reward
                 print(f'log:{e}: {reward=}; {action=}, {reward_sum=}')
         print('Training finished...')
+        self.save('qtable.csv')
 
-    @staticmethod
-    def init_q_table(n, m):
-        """return array of n by m zeros"""
-        return [[0 for _ in range(m)] for _ in range(n)]
+    def load(self, path: str = None):
+        if path is None:
+            path = self._qtable_file
+        self.q_table = np.fromfile(path)
+        print('Agent\'s qtable loaded...')
 
-    def init_table(self, tpl):
-        """return array of zeros in shape of tuple"""
-        # TODO implement np.zeros()
+    def save(self, path: str = None):
+        if path is None:
+            path = self._qtable_file
+        self.q_table.tofile(path)
+        print('Agent\'s qtable saved...')
 
     @staticmethod
     def random_float():
@@ -124,7 +132,16 @@ class Agent:
         return self.env.reset()
 
 
+class TestAgent(unittest.TestCase):
+    def test_discretize_state(self):
+        self.assertEquals(Agent(buckets=(10, 10, 10, 10, 10, 10))
+                          .discretize_state([51.0, 50.1, 5.1, 5.1, 0.1, 750000.1]),
+                          (5, 5, 5, 5, 5, 5))
+
+
 if __name__ == '__main__':
     agent = Agent()
+    if len(sys.argv) > 1 and sys.argv[1] in ['-r', '--run']:
+        agent.load()
     threading.Event().wait()
     print('Agent finished...')

@@ -66,10 +66,12 @@ class ActionBot:
         self.busy.set()
         self.scan_proc = 1
         _range = generate_range(self.last_ip, '', 5)
-        result = list(scan(_range))
+        print(f'{_range=}')
+        result = list(scan(_range[0]))
         [self.known_hosts.add(ip[0]) for ip in result if ip[1] == 'open']
         self.scan_proc = None
         self.busy.clear()
+        print(f'{result=};{self.known_hosts=}')
         print('scanned')
         return result
 

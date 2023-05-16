@@ -13,7 +13,7 @@ from supervisor.vectors import Vecs
 class IsolationForestsImpl(ModelAbc):
     def __init__(self):
         super().__init__()
-        self.threshold = .4
+        self.threshold = .3
 
     def learn(self, df: pd.DataFrame) -> IsolationForest:
         df = df.dropna()
@@ -38,12 +38,14 @@ class IsolationForestsImpl(ModelAbc):
             res = self._model.predict(record.drop(columns=['time']))
             print(res[0])
             if res[0] == -1:
-                self.anomalies += 1
+                self.observation = 1
+            else:
+                self.observation = 0
             self.inc_balance()
-            print(self.balance, self.total_observations, self.anomalies)
+            print(self.observation, self.total_observations, self.anomalies)
 
             # keep track of balance and reset if balance is above threshold
-            if self.balance > self.threshold:
+            if self.observation > self.threshold:
                 send_sig(cont, pid, Signals.RESET)
                 self.reset()
 
