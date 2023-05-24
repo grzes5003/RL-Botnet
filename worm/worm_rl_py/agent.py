@@ -33,8 +33,8 @@ class Agent:
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=200, min_lr=0.1,
-                 min_epsilon=0.1, discount=.9, decay=25, *, run: bool = False):
+    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.1,
+                 min_epsilon=0.1, discount=.9, decay=25, *, run: bool = False, path: str = None):
         logging.basicConfig(level=logging.INFO, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
         self._run = run
 
@@ -52,7 +52,7 @@ class Agent:
         self.epsilon = None
         self.done = False
 
-        self._qtable_file = 'qtable.csv'
+        self._qtable_file = '/worm/learn.npy'
 
         # [rx_bytes,tx_bytes,rx_packets,tx_packets,ram_usage,cpu_usage]
         self.upper_bounds = self.env.observation_space().high
@@ -60,7 +60,7 @@ class Agent:
 
         self.q_table = np.zeros(self.buckets + (self.env.action_space.n,))
         if self._run:
-            self.load()
+            self.load(path=path)
         logging.info('Agent initialized...')
 
     def discretize_state(self, obs):
@@ -114,6 +114,7 @@ class Agent:
         self.save('qtable.csv')
 
     def run(self):
+        self.epsilon = -1
         logging.info('Running started...')
         while not self.done:
             action = self.choose_action(self.discretize_state(self.reset()))
@@ -123,13 +124,13 @@ class Agent:
     def load(self, path: str = None):
         if path is None:
             path = self._qtable_file
-        self.q_table = np.fromfile(path)
+        self.q_table = np.load(path)
         logging.debug('Agent\'s qtable loaded...')
 
     def save(self, path: str = None):
         if path is None:
             path = self._qtable_file
-        self.q_table.tofile(path)
+        np.save(path, self.q_table)
         logging.debug('Agent\'s qtable saved...')
 
     @staticmethod
@@ -157,8 +158,12 @@ class TestAgent(unittest.TestCase):
 if __name__ == '__main__':
     print('Agent starting...')
     _run = False
+    _file = None
     if len(sys.argv) > 1 and sys.argv[1] in ['-r', '--run']:
         _run = True
-    agent = Agent(run=_run)
+    if len(sys.argv) > 1 and ['-f'] in sys.argv:
+        idx = sys.argv.index('-f') or sys.argv.index('--file')
+        _file = sys.argv[idx+1]
+    agent = Agent(run=_run, path=_file)
     threading.Event().wait()
     print('Agent finished...')

@@ -13,16 +13,14 @@ from action import ActionBot, Actions
 
 class Agent:
     def handle_sigterm(self, *_):
-        print('got SIGTERM')
-        # self.done = True
+        print('got SIGTERM; no action')
 
     def handle_sigusr1(self, *_):
         print('got SIGUSR1')
         self.run()
 
     def handle_sigusr2(self, *_):
-        print('got SIGUSR2')
-        # self.done = True
+        print('got SIGUSR2; no action')
 
     def sig_handlers(self):
         if platform.system() == 'Linux':

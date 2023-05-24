@@ -11,6 +11,18 @@ services:
         ipv4_address: 10.0.0.11
     environment:
       - IP_ADDR="10.0.0.11"
+  m1-r:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: image-infected-run
+    ports:
+      - 5050:80
+    networks:
+      netw:
+        ipv4_address: 10.0.0.11
+    environment:
+      - IP_ADDR="10.0.0.11"
   m3:
     build:
       context: .

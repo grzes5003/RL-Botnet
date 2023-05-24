@@ -1,13 +1,22 @@
+import logging
 from abc import ABC, abstractmethod
 
 import pandas as pd
 from sklearn.base import OutlierMixin
+
+from supervisor.collector import collect_constant_data
+from supervisor.signals import Signals
+from supervisor.superv import get_container, send_sig, tape
+from supervisor.vectors import Vecs
 
 
 class ModelAbc(ABC):
 
     @abstractmethod
     def __init__(self):
+        logging.basicConfig(level=logging.INFO,
+                            format=f'[{self.__class__.__name__}][%(asctime)s][%(levelname)s] %(message)s')
+
         self._total_anomalies = 0
         self._balance = 0
         self._model: OutlierMixin = None
@@ -23,9 +32,32 @@ class ModelAbc(ABC):
     def detect(self, df: pd.DataFrame):
         raise NotImplementedError
 
-    @abstractmethod
-    def listener(self):
-        raise NotImplementedError
+    def listener(self, container_name: str = None):
+        if self._model is None:
+            raise ValueError('Model is not initialized')
+        if container_name is None:
+            cont = get_container()
+        else:
+            cont = get_container(name=container_name)
+        pid = tape(cont)
+        send_sig(cont, pid, Signals.START)
+        records = collect_constant_data(cont)
+        while True:
+            record = records.__next__()
+            record = Vecs.into_df([record])
+            res = self._model.predict(record.drop(columns=['time']))
+            if res[0] == -1:
+                self.observation = 1
+                self.anomalies += 1
+            else:
+                self.observation = 0
+            self.inc_balance()
+            print(f'[{self.__class__.__name__}]{self.observation};{self.total_observations};{self.anomalies}')
+
+            # keep track of balance and reset if balance is above threshold
+            if self.observation > self.threshold:
+                send_sig(cont, pid, Signals.RESET)
+                self.reset()
 
     @property
     def anomalies(self):
@@ -39,7 +71,6 @@ class ModelAbc(ABC):
 
     @property
     def observation(self):
-        print(self._observations)
         if len(self._observations) == 0:
             return 0
         return sum(self._observations) / len(self._observations)
@@ -69,6 +100,5 @@ class ModelAbc(ABC):
         return self._balance
 
     def reset(self):
-        self._total_anomalies = 0
         self._balance = 0
         self._observations = []

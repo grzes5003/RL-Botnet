@@ -30,7 +30,7 @@ ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /
 FROM base AS image-infected-run
 ADD worm/worm_rl_py /worm
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -r; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -r -f /worm/learn_03.pkl; sleep infinity"]
 
 FROM base AS image-clean
 ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /iot/main.py; sleep infinity"]
