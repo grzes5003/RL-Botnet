@@ -21,7 +21,7 @@ def collect_data(time_limit: int):
     return Vecs.into_df(records)
 
 
-def collect_constant_data(cont=get_container()):
+def collect_constant_data(cont):
     records = collections.deque(2*[0], 2)
     stats = cont.stats(stream=True, decode=True)
 

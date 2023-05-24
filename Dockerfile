@@ -17,11 +17,20 @@ RUN apk add --no-cache openrc openssh python3 musl-dev libc-dev \
 
 ADD machines/basic_IoT /iot
 
-FROM base AS image-infected
-ADD worm /worm
+FROM base AS image-infected-static
+ADD worm/worm_prim_py /worm
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py; python /worm/agent.py; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /iot/main.py & python /worm/agent.py; sleep infinity"]
 
+FROM base AS image-infected-learn
+ADD worm/worm_rl_py /worm
+RUN pip install -r worm/requirements.txt
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py; sleep infinity"]
+
+FROM base AS image-infected-run
+ADD worm/worm_rl_py /worm
+RUN pip install -r worm/requirements.txt
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -r; sleep infinity"]
 
 FROM base AS image-clean
 ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /iot/main.py; sleep infinity"]

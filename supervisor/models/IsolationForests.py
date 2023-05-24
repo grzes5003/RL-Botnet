@@ -1,4 +1,5 @@
-
+import sys
+from time import sleep
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -25,10 +26,13 @@ class IsolationForestsImpl(ModelAbc):
         df = df.dropna()
         return self._model.predict(IsolationForestsImpl.drop_timestamp(df))
 
-    def listener(self):
+    def listener(self, container_name: str = None):
         if self._model is None:
             raise ValueError('Model is not initialized')
-        cont = get_container()
+        if container_name is None:
+            cont = get_container()
+        else:
+            cont = get_container(name=container_name)
         pid = tape(cont)
         send_sig(cont, pid, Signals.START)
         records = collect_constant_data(cont)
@@ -49,10 +53,22 @@ class IsolationForestsImpl(ModelAbc):
                 send_sig(cont, pid, Signals.RESET)
                 self.reset()
 
+    @staticmethod
+    def start_worm():
+        """starts worm agent"""
+        cont = get_container()
+        res = cont.exec_run(cmd='python /worm/agent.py', stdin=True)
+        ...
+
 
 if __name__ == '__main__':
+    cont_name = None
+    if len(sys.argv) == 3 and sys.argv[1] in ['-n', '--name']:
+        cont_name = sys.argv[2]
+
     df = pd.read_csv('../resources/mgr-m1-1/test_record_3_diff.csv')
     detector = IsolationForestsImpl()
+
     detector.learn(df)
-    detector.listener()
+    detector.listener(container_name=cont_name)
     print('done')

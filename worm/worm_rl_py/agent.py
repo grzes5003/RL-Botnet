@@ -1,3 +1,4 @@
+import logging
 import math
 import platform
 import random
@@ -18,6 +19,8 @@ class Agent:
 
     def handle_sigusr1(self, *_):
         print('got SIGUSR1')
+        if self._run:
+            return self.run()
         self.train()
 
     def handle_sigusr2(self, *_):
@@ -31,7 +34,10 @@ class Agent:
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
     def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=200, min_lr=0.1,
-                 min_epsilon=0.1, discount=1.0, decay=25):
+                 min_epsilon=0.1, discount=.9, decay=25, *, run: bool = False):
+        logging.basicConfig(level=logging.INFO, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
+        self._run = run
+
         self.sig_handlers()
         self.env = env.Env()
         self.env.observer()
@@ -53,7 +59,9 @@ class Agent:
         self.lower_bounds = self.env.observation_space().low
 
         self.q_table = np.zeros(self.buckets + (self.env.action_space.n,))
-        print('Agent initialized...')
+        if self._run:
+            self.load()
+        logging.info('Agent initialized...')
 
     def discretize_state(self, obs):
         discretized = list()
@@ -85,7 +93,7 @@ class Agent:
         return max(self.min_lr, min(1., 1. - math.log10((t + 1) / self.decay)))
 
     def train(self):
-        print('Training started...')
+        logging.info('Training started...')
         for e in range(self.num_episodes):
             print(f'Episode {e} started...')
             reward_sum = 0.0
@@ -101,21 +109,28 @@ class Agent:
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
                 reward_sum += reward
-                print(f'log:{e}: {reward=}; {action=}, {reward_sum=}')
-        print('Training finished...')
+                logging.info(f'log:{e};{reward=};{action=};{reward_sum=}')
+        logging.info('Training finished...')
         self.save('qtable.csv')
+
+    def run(self):
+        logging.info('Running started...')
+        while not self.done:
+            action = self.choose_action(self.discretize_state(self.reset()))
+            self.env.step(action)
+        logging.info('Running finished...')
 
     def load(self, path: str = None):
         if path is None:
             path = self._qtable_file
         self.q_table = np.fromfile(path)
-        print('Agent\'s qtable loaded...')
+        logging.debug('Agent\'s qtable loaded...')
 
     def save(self, path: str = None):
         if path is None:
             path = self._qtable_file
         self.q_table.tofile(path)
-        print('Agent\'s qtable saved...')
+        logging.debug('Agent\'s qtable saved...')
 
     @staticmethod
     def random_float():
@@ -140,8 +155,10 @@ class TestAgent(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    agent = Agent()
+    print('Agent starting...')
+    _run = False
     if len(sys.argv) > 1 and sys.argv[1] in ['-r', '--run']:
-        agent.load()
+        _run = True
+    agent = Agent(run=_run)
     threading.Event().wait()
     print('Agent finished...')

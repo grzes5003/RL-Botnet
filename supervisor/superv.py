@@ -18,7 +18,7 @@ def get_container(clinet: DockerClient = docker.from_env(), name: str = machine_
         case [container]:
             return container
         case _:
-            raise "Cannot find container"
+            raise ConnectionError("Cannot find container")
 
 
 def tape(cont) -> str:
@@ -29,7 +29,7 @@ def tape(cont) -> str:
         case [line]:
             return line.strip().split()[0]
         case other:
-            raise f"cannot find pid in {other}"
+            raise ConnectionError(f"cannot find pid in {other}")
 
 
 def send_sig(cont, pid, sig: signals.Signals):

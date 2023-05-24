@@ -1,3 +1,4 @@
+import logging
 import random
 import subprocess
 import threading
@@ -18,25 +19,26 @@ class Actions(Enum):
     def sample(cls):
         return random.choice(list(cls)).value
 
-    def action_reward(self, result: int = 0):
-        match self:
-            case Actions.PING:
-                return 5
-            case Actions.NONE:
-                return 0
-            case Actions.SCAN:
-                return 10 + result * 10
-            case Actions.INFECT:
-                return 60
-            case Actions.FETCH_INFO:
-                return 20
+    @classmethod
+    def find_action(cls, iter: int):
+        match iter % 100:
+            case 20:
+                return cls.SCAN.value
+            case 30:
+                return cls.FETCH_INFO.value
+            case 10:
+                return cls.PING.value
+            case 50:
+                return cls.INFECT.value
             case _:
-                raise ValueError(f'Action {self} not found')
+                return cls.NONE.value
 
 
 class ActionBot:
 
     def __init__(self):
+        logging.basicConfig(level=logging.DEBUG, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
+
         self.thread_pool = ThreadPoolExecutor(max_workers=1)
 
         self.ping_proc: subprocess.Popen = None
@@ -53,30 +55,34 @@ class ActionBot:
         self.busy.is_set()
 
     def ping_action(self):
-        print('pinging...')
+        logging.info('pinging...')
         self.busy.set()
         self.ping_proc = subprocess.Popen(f'ping -c 5 10.0.0.12', shell=True, stdout=subprocess.DEVNULL)
         self.ping_proc.wait()
         self.ping_proc = None
         self.busy.clear()
-        print('pinged')
+        logging.debug('pinged')
 
     def scan_action(self):
-        print('scanning...')
+        logging.info('scanning...')
         self.busy.set()
         self.scan_proc = 1
+
         _range = generate_range(self.last_ip, '', 5)
-        print(f'{_range=}')
+        logging.debug(f'{_range=}')
         result = list(scan(_range[0]))
         [self.known_hosts.add(ip[0]) for ip in result if ip[1] == 'open']
+        self.last_ip = _range[1]
+
+        logging.info(f'{result=};{self.known_hosts=}')
+
         self.scan_proc = None
         self.busy.clear()
-        print(f'{result=};{self.known_hosts=}')
-        print('scanned')
+        logging.info('scanned')
         return result
 
     def infect_action(self):
-        print('infecting...')
+        logging.info('infecting...')
         self.busy.set()
         if len(self.known_hosts) == 0:
             return
@@ -84,15 +90,15 @@ class ActionBot:
         connect_remote(host_addr)
         self.infected_hosts.append(host_addr)
         self.busy.clear()
-        print('infected')
+        logging.debug('infected')
 
     def fetch_info_action(self):
-        print('fetching info...')
+        logging.info('fetching info...')
         self.busy.set()
         for host in self.infected_hosts:
             fetch_info(host)
         self.busy.clear()
-        print('fetched info')
+        logging.debug('fetched info')
 
     def none(self):
         """blank action"""

@@ -90,6 +90,11 @@ def send_load(ssh: paramiko.SSHClient):
     sftp = ssh.open_sftp()
     print(f'=== sending to {path} ===')
     sftp.put(f'{path}/agent.py', '/worm/agent.py')
+    sftp.put(f'{path}/action.py', '/worm/action.py')
+    sftp.put(f'{path}/env.py', '/worm/env.py')
+    sftp.put(f'{path}/script.py', '/worm/script.py')
+    sftp.put(f'{path}/util.py', '/worm/util.py')
+    sftp.put(f'{path}/requirements.txt', '/worm/requirements.txt')
     print('=== load sent ===')
     sftp.close()
 

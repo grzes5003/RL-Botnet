@@ -5,27 +5,31 @@ import urllib.parse
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
+import logging
 
 
 class Sensor:
     target_addr = '10.10.10.1'
     sleep_time = 5
 
-    def __init__(self):
-        hostName = "localhost"
+    def __init__(self, _target_addr: str=None):
+        logging.basicConfig(level=logging.INFO, format='[IOT][%(asctime)s][%(levelname)s] %(message)s')
+        logging.info('starting...')
+
+        hostName = self.target_addr if _target_addr else "localhost"
         serverPort = 8090
 
         self.supervisor()
-        print('after')
+        logging.debug('after')
         server = HTTPServer((hostName, serverPort), self.Server)
-        print("Server started http://%s:%s" % (hostName, serverPort))
+        logging.info("Server started http://%s:%s" % (hostName, serverPort))
 
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             pass
         server.server_close()
-        print("Server stopped.")
+        logging.info("Server stopped.")
 
     def send_data(self, data: bytes):
         params = urllib.parse.urlencode({'data': data})
@@ -35,24 +39,24 @@ class Sensor:
             conn = HTTPConnection(self.target_addr, 80, timeout=.1)
             conn.request("POST", "/", params, headers)
             resp = conn.getresponse()
-            print(resp.status)
-            print(resp.read())
+            logging.debug(resp.status)
+            logging.debug(resp.read())
         except TimeoutError:
-            print('timed-out')
+            logging.debug('timed-out')
         finally:
-            print('preceding')
+            logging.debug('preceding')
 
     def fetch_data(self):
         try:
             conn = HTTPConnection(self.target_addr, 80, timeout=5)
             conn.request("GET", "/")
             resp = conn.getresponse()
-            print(resp.status)
-            print(resp.read())
+            logging.debug(resp.status)
+            logging.debug(resp.read())
         except TimeoutError:
-            print('timed-out')
+            logging.debug('timed-out')
         finally:
-            print('preceding')
+            logging.debug('preceding')
 
     @staticmethod
     def read_sensor() -> bytes:
@@ -75,7 +79,7 @@ class Sensor:
 
     def sender(self):
         while True:
-            print('calling send')
+            logging.debug('calling send')
             data = self.read_sensor()
             self.send_data(data)
             time.sleep(self.sleep_time)
@@ -83,7 +87,7 @@ class Sensor:
     def fetcher(self):
         time.sleep(.1)
         while True:
-            print('calling fetch')
+            logging.debug('calling fetch')
             self.fetch_data()
             time.sleep(self.sleep_time * 2)
 
@@ -100,5 +104,7 @@ class Sensor:
 
 
 if __name__ == '__main__':
+    # check if env variable IP_ADDR exists and get it
+    ip_addr = os.environ['IP_ADDR'] if 'IP_ADDR' in os.environ else None
     print(platform.system())
-    Sensor()
+    Sensor(_target_addr=ip_addr)
