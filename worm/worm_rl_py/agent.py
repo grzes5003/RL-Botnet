@@ -15,6 +15,8 @@ class Agent:
 
     def handle_sigterm(self, *_):
         print('got SIGTERM')
+        if self._run:
+            return
         self.done = True
 
     def handle_sigusr1(self, *_):
@@ -25,6 +27,8 @@ class Agent:
 
     def handle_sigusr2(self, *_):
         print('got SIGUSR2')
+        if self._run:
+            return
         self.done = True
 
     def sig_handlers(self):
@@ -52,7 +56,7 @@ class Agent:
         self.epsilon = None
         self.done = False
 
-        self._qtable_file = '/worm/learn.npy'
+        self._qtable_file = '/worm/qtable.npy'
 
         # [rx_bytes,tx_bytes,rx_packets,tx_packets,ram_usage,cpu_usage]
         self.upper_bounds = self.env.observation_space().high

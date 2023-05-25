@@ -52,7 +52,7 @@ class ModelAbc(ABC):
             else:
                 self.observation = 0
             self.inc_balance()
-            print(f'[{self.__class__.__name__}]{self.observation};{self.total_observations};{self.anomalies}')
+            print(f'<[{self.__class__.__name__}]{self.observation};{self.total_observations};{self.anomalies}>')
 
             # keep track of balance and reset if balance is above threshold
             if self.observation > self.threshold:
@@ -100,5 +100,4 @@ class ModelAbc(ABC):
         return self._balance
 
     def reset(self):
-        self._balance = 0
         self._observations = []

@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import re
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
@@ -97,6 +99,44 @@ class Log:
             'reward': self.reward,
             'action': self.action,
             'reward_sum': self.reward_sum
+        }
+
+    @staticmethod
+    def into_df(arr: [Vecs]):
+        return pd.DataFrame.from_records([item.to_dict() for item in arr])
+
+
+@dataclass
+class Eval:
+    type: str
+    iter: int
+    anomalies: int
+
+    @staticmethod
+    def read_file(path: str):
+        with open(path, 'r') as f:
+            return re.findall(r"<(.*?)>", f.read())
+
+    @classmethod
+    def from_str(cls, read: str):
+        # example:
+        # <[LocalOutlierFactorImpl]0.0;186;0>
+        #
+        _type, *rest = read.split(']')
+        _type = _type.removeprefix('<')\
+            .removeprefix('[')
+        rest = rest[0].split(';')
+        return cls(
+            type=_type,
+            iter=int(rest[1]),
+            anomalies=int(rest[2])
+        )
+
+    def to_dict(self):
+        return {
+            'type': self.type,
+            'iter': self.iter,
+            'anomalies': self.anomalies
         }
 
     @staticmethod

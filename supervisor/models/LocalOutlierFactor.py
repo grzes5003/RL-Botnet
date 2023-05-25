@@ -13,7 +13,7 @@ class LocalOutlierFactorImpl(ModelAbc):
 
     def learn(self, df: pd.DataFrame) -> LocalOutlierFactor:
         df = df.dropna()
-        self._model: LocalOutlierFactor = LocalOutlierFactor(contamination=0.01, novelty=True)\
+        self._model: LocalOutlierFactor = LocalOutlierFactor(contamination=0.01, algorithm='ball_tree', novelty=True, p=4)\
             .fit(LocalOutlierFactorImpl.drop_timestamp(df).values)
         return self._model
 
