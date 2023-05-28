@@ -21,17 +21,17 @@ class Actions(Enum):
 
     @classmethod
     def find_action(cls, iter: int):
-        match iter % 10:
-            case 1 | 3:
+        match iter % 100:
+            case 20:
                 return cls.SCAN.value
-            case 4 | 5 | 9 | 0:
+            case 30:
                 return cls.FETCH_INFO.value
-            case 6 | 7:
+            case 10:
                 return cls.PING.value
-            case 8:
+            case 50:
                 return cls.INFECT.value
             case _:
-                return cls.PING.value
+                return cls.NONE.value
 
 
 class ActionBot:
@@ -102,7 +102,7 @@ class ActionBot:
 
     def none(self):
         """blank action"""
-        logging.info('Idling...')
+        pass
 
     def reset(self):
         self.thread_pool.shutdown(wait=False, cancel_futures=True)

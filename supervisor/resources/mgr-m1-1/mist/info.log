@@ -1,0 +1,4 @@
+eval_random_iot.log:
+    random IoT running evaluation with model fitted on basic_IoT
+eval_random_iot_learned.log:
+    random IoT running evaluation with fitted model

@@ -1,15 +1,10 @@
-import collections
-import dataclasses
-import threading
-import time
-
+import tensorflow as tf
+from tf_agents.trajectories import time_step as ts
+from tf_agents.environments import py_environment
 import numpy as np
-import psutil
-
-from action import ActionBot, Actions
 
 
-class Env:
+class Env(py_environment.PyEnvironment):
     @dataclasses.dataclass
     class ObservationSpace:
         low = [0, 0, 0, 0, -10000, 0]
@@ -17,7 +12,6 @@ class Env:
 
     def __init__(self):
         self._n = 6
-        self.threshold = 5
         self.action_space = ActionBot()
         self.observation = None
         self.lock = threading.Lock()
@@ -75,54 +69,6 @@ class Env:
     def action(self, action):
         return self.action_space.action(action)
 
-    def step(self, action: int):
-        result = self.action_space.action(action)
-        time.sleep(.5)
-
-        reward = Actions(action).action_reward() - self.action_cooldown(action) + self.hunger_factor(action)
-        if result == -1:
-            reward *= 0.5
-        elif result == -2:
-            reward = 0
-        observation = self._get_obs()
-        info = self._get_info()
-
-        return observation, reward, False, False, info
-
-    def action_cooldown(self, action: int):
-        cooldown = 100
-        action_key = Actions(action)
-
-        if action_key == Actions.NONE:
-            return 0
-
-        current_time = time.time()
-        p_100 = Actions(action).action_reward()
-        cooldown_val = max(cooldown - current_time + self.action_cooldown_dict[action_key], 0)
-        self.action_cooldown_dict[action_key] = current_time
-
-        return p_100 * (cooldown_val / 100)
-
-    def hunger_factor(self, action: int):
-        action_key: Actions = Actions(action)
-        last_exec = self.action_cooldown_dict[action_key]
-        delta = time.time() - last_exec
-
-        if delta <= self.threshold:
-            return 0
-
-        p_100 = Actions(action).action_reward()
-
-        return min(delta - self.threshold, 1) * p_100
-
-    def reset(self):
-        self.action_space.reset()
-        time.sleep(.5)
-        self.action_cooldown_dict = {action: 0 for action in Actions}
-        observation = self._get_obs()
-
-        return observation
-
     def _get_obs(self):
         with self.lock:
             return self.observation
@@ -130,14 +76,24 @@ class Env:
     def _get_info(self):
         return {}
 
-    def observation_space(self):
+    def observation_spec(self):
         return self.ObservationSpace
 
-    @property
-    def n(self):
-        return self._n
+    def _reset(self):
+        raise NotImplementedError
 
+    def _step(self, action):
+        result = self.action_space.action(action)
+        time.sleep(.5)
 
-if __name__ == '__main__':
-    env = Env()
-    threading.Event().wait()
+        reward = Actions(action).action_reward() - self.action_cooldown(action)
+        if result == -1:
+            reward *= 0.5
+        elif result == -2:
+            reward = 0
+        observation = self._get_obs()
+        info = self._get_info()
+
+        return ts.transition(
+          np.array([self._state], dtype=np.int32), reward=0.0, discount=1.0)
+

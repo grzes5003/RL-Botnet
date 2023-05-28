@@ -1,0 +1,10 @@
+[iot]
+basic_IoT = "a"
+random_IoT = "b"
+
+[learning]
+01="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.1, min_epsilon=0.1, discount=.9, decay=25"
+02="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.1, min_epsilon=0.1, discount=.9, decay=25; changed rewards"
+    "ping=5;none=10;scan=20+result*10;infect=80;fetch_info=10"
+03="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.1, min_epsilon=0.1, discount=.9, decay=25; changed rewards"
+    "updates to the reward; ping=5;none=10;scan=20+result*10;infect=80;fetch_info=5"

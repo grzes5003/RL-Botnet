@@ -1,20 +1,21 @@
+import logging
 import os
 import platform
+import random
 import time
-import urllib.parse
+import urllib
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
-import logging
 
 
 class Sensor:
     target_addr = '10.10.10.1'
     sleep_time = 5
 
-    def __init__(self, _target_addr: str=None):
+    def __init__(self, _target_addr: str = None):
         logging.basicConfig(level=logging.INFO, format='[IOT][%(asctime)s][%(levelname)s] %(message)s')
-        logging.info('starting basic version...')
+        logging.info('starting random version...')
 
         hostName = "localhost"
         serverPort = 8090
@@ -62,18 +63,30 @@ class Sensor:
     def read_sensor() -> bytes:
         match platform.system():
             case 'Linux':
-                return os.urandom(100)
+                data_size = random.randint(10, 10_000)
+                return os.urandom(data_size)
             case other:
                 raise NotImplementedError(f'Other platform {other}')
-                # return b'12312313'
+
+    @staticmethod
+    def write_data():
+        match platform.system():
+            case 'Linux':
+                data_size = random.randint(10, 10_000)
+                with open(os.devnull, 'wb') as f:
+                    f.write(data_size * b'0')
+            case other:
+                raise NotImplementedError(f'Other platform {other}')
 
     def supervisor(self):
         print("11")
         thr_snd = Thread(target=self.sender)
         thr_ftc = Thread(target=self.fetcher)
+        thr_wrt = Thread(target=self.writer)
 
         thr_snd.start()
         thr_ftc.start()
+        thr_wrt.start()
         print("started")
         return thr_snd, thr_ftc
 
@@ -82,14 +95,24 @@ class Sensor:
             logging.debug('calling send')
             data = self.read_sensor()
             self.send_data(data)
-            time.sleep(self.sleep_time)
+            self.sleeper()
 
     def fetcher(self):
-        time.sleep(.1)
         while True:
             logging.debug('calling fetch')
             self.fetch_data()
-            time.sleep(self.sleep_time * 2)
+            self.sleeper()
+
+    def writer(self):
+        while True:
+            logging.debug('calling write')
+            self.write_data()
+            self.sleeper()
+
+    @staticmethod
+    def sleeper():
+        sleep_time = random.uniform(0.1, 7)
+        time.sleep(sleep_time)
 
     class Server(BaseHTTPRequestHandler):
         def do_GET(self):

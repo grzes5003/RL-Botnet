@@ -1,3 +1,4 @@
+import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
@@ -7,11 +8,20 @@ from supervisor.models.IsolationForests import IsolationForestsImpl
 from supervisor.models.LocalOutlierFactor import LocalOutlierFactorImpl
 
 if __name__ == '__main__':
-    cont_name = None
-    if len(sys.argv) == 3 and sys.argv[1] in ['-n', '--name']:
-        cont_name = sys.argv[2]
+    parser = argparse.ArgumentParser(
+        prog='ProgramName',
+        description='What the program does',
+        epilog='Text at the bottom of help')
+    parser.add_argument('-n', '--name', help='name of the container', required=False)
+    parser.add_argument('-i', '--input', help='input file', required=False)
+    args = parser.parse_args()
 
-    df = pd.read_csv('../resources/mgr-m1-1/test_record_3_diff.csv')
+    input_file = '../resources/mgr-m1-1/test_record_3_diff.csv'
+    # input_file = '../resources/mgr-m1-1/test_record_random_diff.csv'
+    if args.input:
+        input_file = args.input
+
+    df = pd.read_csv(input_file)
     detectors = [LocalOutlierFactorImpl(), IsolationForestsImpl()]
 
     [detector.learn(df) for detector in detectors]
@@ -19,9 +29,8 @@ if __name__ == '__main__':
         pool = []
         for detector in detectors:
             print(detector.__class__.__name__)
-            future = executor.submit(detector.listener, container_name=cont_name)
+            future = executor.submit(detector.listener, container_name=args.name)
             pool.append(future)
-        # pool = [executor.submit(lambda detector: detector.listener(container_name=cont_name), detector) for detector in detectors]
         for future in pool:
             future.result()
     print('done')

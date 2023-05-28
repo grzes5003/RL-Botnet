@@ -2,7 +2,6 @@ import os
 import time
 
 import pandas as pd
-from docker.models.resource import Model
 
 from supervisor.superv import get_container
 from supervisor.vectors import Vecs
@@ -10,8 +9,8 @@ from supervisor.vectors import Vecs
 import collections
 
 
-def collect_data(time_limit: int):
-    cont = get_container()
+def collect_data(time_limit: int, machine_name: str = 'worm-docker-m1-1'):
+    cont = get_container(name=machine_name)
     records = []
     stats = cont.stats(stream=True, decode=True)
 
@@ -51,7 +50,8 @@ def generate_diff(file_path: str):
 if __name__ == '__main__':
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    df = collect_data(240)
-    save_data(df, os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_3.csv'))
+    # df = collect_data(500, machine_name='mgr-m1-r-02-1')
+    # save_data(df, os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_random.csv'))
+    generate_diff(os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_random.csv'))
     print('done')
 

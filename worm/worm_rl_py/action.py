@@ -24,13 +24,13 @@ class Actions(Enum):
             case Actions.PING:
                 return 5
             case Actions.NONE:
-                return 0
+                return 10
             case Actions.SCAN:
-                return 10 + result * 10
+                return 20 + result * 10
             case Actions.INFECT:
-                return 60
+                return 80
             case Actions.FETCH_INFO:
-                return 20
+                return 5
             case _:
                 raise ValueError(f'Action {self} not found')
 
@@ -85,7 +85,7 @@ class ActionBot:
     def infect_action(self):
         logging.info('infecting...')
         self.busy.set()
-        if len(self.known_hosts) == 0:
+        if len(self.known_hosts) == 0 or '10.0.0.11' in self.infected_hosts:
             return
         host_addr = self.known_hosts.pop()
         connect_remote(host_addr)
@@ -103,7 +103,7 @@ class ActionBot:
 
     def none(self):
         """blank action"""
-        pass
+        logging.info('Idling...')
 
     def reset(self):
         self.thread_pool.shutdown(wait=False, cancel_futures=True)
@@ -111,6 +111,9 @@ class ActionBot:
             self.ping_proc.kill()
             self.ping_proc = None
         self.thread_pool = ThreadPoolExecutor(max_workers=1)
+        self.known_hosts = set()
+        self.infected_hosts = []
+        self.last_ip = '10.0.0.1'
         self.busy.clear()
 
     @staticmethod

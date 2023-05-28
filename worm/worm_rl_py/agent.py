@@ -64,6 +64,7 @@ class Agent:
 
         self.q_table = np.zeros(self.buckets + (self.env.action_space.n,))
         if self._run:
+            logging.info('Agent in run mode')
             self.load(path=path)
         logging.info('Agent initialized...')
 
@@ -120,9 +121,11 @@ class Agent:
     def run(self):
         self.epsilon = -1
         logging.info('Running started...')
+        current_state = self.discretize_state(self.reset())
         while not self.done:
-            action = self.choose_action(self.discretize_state(self.reset()))
-            self.env.step(action)
+            action = self.choose_action(current_state)
+            obs, reward, _, _, _ = self.env.step(action)
+            current_state = self.discretize_state(obs)
         logging.info('Running finished...')
 
     def load(self, path: str = None):
@@ -164,6 +167,7 @@ if __name__ == '__main__':
     _run = False
     _file = None
     if len(sys.argv) > 1 and sys.argv[1] in ['-r', '--run']:
+        print('Running mode selected...')
         _run = True
     if len(sys.argv) > 1 and ['-f'] in sys.argv:
         idx = sys.argv.index('-f') or sys.argv.index('--file')

@@ -1,5 +1,6 @@
 services:
   m1:
+    # Q learning worm
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,6 +13,20 @@ services:
     environment:
       - IP_ADDR="10.0.0.11"
   m1-r:
+    # Prod Q learning worm
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: image-infected-run
+    ports:
+      - 5050:80
+    networks:
+      netw:
+        ipv4_address: 10.0.0.11
+    environment:
+      - IP_ADDR="10.0.0.11"
+  m1-r-02:
+    # Prod Q learning worm with randomized IoT device
     build:
       context: .
       dockerfile: Dockerfile
@@ -24,6 +39,7 @@ services:
     environment:
       - IP_ADDR="10.0.0.11"
   m3:
+    # Static worm
     build:
       context: .
       dockerfile: Dockerfile
@@ -32,10 +48,25 @@ services:
       - 5050:80
     networks:
       netw:
-        ipv4_address: 10.0.0.13
+        ipv4_address: 10.0.0.11
     environment:
-      - IP_ADDR="10.0.0.13"
+      - IP_ADDR="10.0.0.11"
+  m4:
+    # Deep Q learning worm
+    # using tensorflow
+    build:
+        context: .
+        dockerfile: dql.Dockerfile
+    privileged: true
+    ports:
+      - 5050:80
+    networks:
+      netw:
+        ipv4_address: 10.0.0.11
+    environment:
+      - IP_ADDR="10.0.0.11"
   m2:
+    # Clean machine without worm
     build:
       context: .
       dockerfile: Dockerfile
@@ -47,6 +78,7 @@ services:
       netw:
         ipv4_address: 10.0.0.12
   honeypot:
+    # Honeypot with several ports and IP addresses open
     build:
       context: .
       dockerfile: honeypot.Dockerfile

@@ -1,13 +1,8 @@
 import logging
-import math
 import platform
-import random
 import signal
-import sys
 import threading
 import time
-import unittest
-
 from action import ActionBot, Actions
 
 
@@ -36,6 +31,8 @@ class Agent:
         self.iter = 0
         self.action_space = ActionBot()
 
+        logging.info('Agent initialized...')
+
     def run(self):
         while not self.done:
             logging.info(f'iter: {self.iter}')
@@ -44,6 +41,9 @@ class Agent:
             time.sleep(.5)
 
             self.iter += 1
+
+            if self.iter % 10 == 0:
+                self.action_space.reset()
 
     def find_action(self):
         return Actions.find_action(self.iter)
