@@ -25,13 +25,13 @@ ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /i
 FROM base AS image-infected-learn
 ADD worm/worm_rl_py /worm
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -s; sleep infinity"]
 
 FROM base AS image-infected-run
 ADD worm/worm_rl_py /worm
-ADD supervisor/resources/results/worm-rl/models/worm-rl-a-03.npy /qtable.npy
+ADD supervisor/resources/results/worm-rl/models/worm-rl-a-05.npy /qtable.npy
 RUN pip install -r worm/requirements.txt
-ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -r -f /qtable.npy; sleep infinity"]
+ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 10; python /iot/main.py & python /worm/agent.py -r -f /qtable.npy -s; sleep infinity"]
 
 FROM base AS image-clean
 ENTRYPOINT ["/bin/sh","-c","rc-status; rc-service sshd start; sleep 2; python /iot/main.py; sleep infinity"]

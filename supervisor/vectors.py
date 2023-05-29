@@ -3,7 +3,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
 
 
 @dataclass
@@ -142,3 +145,91 @@ class Eval:
     @staticmethod
     def into_df(arr: [Vecs]):
         return pd.DataFrame.from_records([item.to_dict() for item in arr])
+
+
+class Actions(Enum):
+    PING = 'pinging...'
+    NONE = 'Idling...'
+    SCAN = 'scanning...'
+    INFECT = 'infecting...'
+    FETCH_INFO = 'fetching info...'
+
+    @staticmethod
+    def get_values():
+        return [a.value for a in Actions]
+
+@dataclass
+class Ops:
+    operation: Actions
+
+    @classmethod
+    def from_str(cls, read: str):
+        # example:
+        # 2023-05-28T17:24:53.781676732Z [WORM][2023-05-28 17:24:53,781][INFO] fetching info...
+        #
+        match read:
+            case a if Actions.FETCH_INFO.value in a:
+                return cls(operation=Actions.FETCH_INFO)
+            case a if Actions.SCAN.value in a:
+                return cls(operation=Actions.SCAN)
+            case a if Actions.NONE.value in a:
+                return cls(operation=Actions.NONE)
+            case a if Actions.PING.value in a:
+                return cls(operation=Actions.PING)
+            case a if Actions.INFECT.value in a:
+                return cls(operation=Actions.INFECT)
+            case _:
+                raise ValueError('bad line')
+
+    @staticmethod
+    def into_df(arr: [Ops]):
+        return pd.DataFrame.from_records([item.to_dict() for item in arr])
+
+    def to_dict(self):
+        return {
+            'operation': self.operation.name
+        }
+
+    @staticmethod
+    def filter_file(path: str):
+        with open(path, 'r') as f:
+            return filter(lambda item: any(val in item for val in Actions.get_values()),
+                          re.findall(r"\[WORM].*\.{3}\n", f.read()))
+
+    @staticmethod
+    def file2arr(path: str):
+        lines = Ops.filter_file(path)
+        return [Ops.from_str(line) for line in lines]
+
+
+if __name__ == '__main__':
+    file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-03-actions.log'
+    file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-05-actions.log'
+    file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-b-01-actions.log'
+
+    res = Ops.file2arr(file_path_rl)
+    r1_df = Ops.into_df(res)
+    r1_df['type'] = 'worm-static'
+
+    res = Ops.file2arr(file_path_sarsa)
+    r2_df = Ops.into_df(res)
+    r2_df['type'] = 'worm-rl SARSA'
+
+    res = Ops.file2arr(file_path_static)
+    r3_df = Ops.into_df(res)
+    r3_df['type'] = 'worm-rl Q-learning'
+
+    df = pd.concat([r1_df, r2_df, r3_df])
+    table = (df.groupby(['operation', 'type']).size() / df.groupby('type').size()).unstack()
+    sns.set_theme()
+    # sns.dark_palette("seagreen")
+    sns.heatmap(table, cmap=sns.cm.rocket_r, annot=True, fmt=".2%")
+
+    plt.tight_layout()
+    plt.xlabel('Worm type')
+    plt.ylabel('Operation')
+    plt.title('Operation distribution for worm types \n (static IoT device)')
+    plt.subplots_adjust(top=.9)
+    plt.show()
+    ...
+
