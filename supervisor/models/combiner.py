@@ -18,8 +18,8 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--ubuntu', action='store_true', help='is ubuntu', required=False)
     args = parser.parse_args()
 
-    # input_file = '../resources/mgr-m1-1/test_record_long_diff.csv'
-    input_file = '../resources/mgr-m1-1/test_record_random_diff.csv'
+    input_file = '../resources/mgr-m1-1/test_record_long_diff.csv'
+    # input_file = '../resources/mgr-m1-1/test_record_random_diff.csv'
     if args.input:
         input_file = args.input
 

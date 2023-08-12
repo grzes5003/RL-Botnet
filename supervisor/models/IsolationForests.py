@@ -14,7 +14,7 @@ class IsolationForestsImpl(ModelAbc):
     def learn(self, df: pd.DataFrame) -> IsolationForest:
         df = df.dropna()
         # , max_features=3)\
-        self._model: IsolationForest = IsolationForest(random_state=42, contamination=0.01, max_features=3)\
+        self._model: IsolationForest = IsolationForest(random_state=42, contamination=0.01, max_features=1.0)\
             .fit(IsolationForestsImpl.drop_timestamp(df))
         return self._model
 

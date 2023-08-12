@@ -24,15 +24,16 @@ def file2log(path: str):
         return [Log.from_str(line) for line in f if 'log:' in line]
 
 
-def plot_learning_curve(df: pd.DataFrame):
-    sns.set_theme(style="darkgrid")
+def plot_learning_curve(df: pd.DataFrame, algorithm: str = 'DQN'):
+    sns.set_theme(style="whitegrid")
 
     alt_df = df.groupby('log', as_index=False).last()
-    sns.lineplot(data=alt_df, x='log', y='reward_sum')
+    sns.lineplot(data=alt_df, x='log', y='reward_sum', color="tab:blue", label="Reward")
+    sns.regplot(x=alt_df['log'], y=alt_df['reward_sum'], scatter=False, color="tab:red", label="Regression Line")
 
-    plt.title('RL reward in each episode')
-    plt.xlabel('episode')
-    plt.ylabel('reward')
+    plt.title(f'Reward in each episode ({algorithm})')
+    plt.xlabel('Iteration')
+    plt.ylabel('Reward')
 
     plt.show()
 
@@ -49,7 +50,7 @@ def plot_detections(df: pd.DataFrame):
     plt.show()
 
 
-def plot_detections_type(paths: [(str, str)]):
+def plot_detections_type(paths: [(str, str)], type: str = 'IsolationForestsImpl', additional: str = 'Isolation Forests, Random IoT device'):
     dfs = []
     for path, name in paths:
         text = Eval.read_file(path)
@@ -59,16 +60,17 @@ def plot_detections_type(paths: [(str, str)]):
         dfs.append(eval_df)
 
     df = pd.concat(dfs)
-    df = df[df['type'] == 'IsolationForestsImpl']
+    df = df[df['type'] == type]
 
     sns.set_theme(style="darkgrid")
 
     sns.lineplot(data=df, x='iter', y='anomalies', hue='Method')
 
-    plt.title('Number of detected anomalies during evaluation (Isolation Forests)')
-    plt.xlabel('Measurement')
-    plt.ylabel('Number of anomalies')
+    plt.title(f'Number of detected anomalies during evaluation\n {additional}')
+    plt.xlabel('Detector iteration')
+    plt.ylabel('Number of detected anomalies')
 
+    plt.xlim(0, 200)
     plt.show()
 
 
@@ -87,11 +89,61 @@ def plot_detections_cum(df: pd.DataFrame):
     plt.show()
 
 
+def plot_detections_heatmap(path: str):
+    text = Eval.read_file(path)
+    eval_arr = [Eval.from_str(line) for line in text]
+    df = Eval.into_df(eval_arr)
+
+    df = df[df['type'] == 'IsolationForestsImpl']
+
+    sns.set_theme(style="whitegrid")
+
+    # df = df.pivot(index='iter', columns='type', values='anomalies')
+    sns.heatmap(df, annot=True, fmt="d", linewidths=.5, cmap="YlGnBu")
+
+    plt.title('Number of detected anomalies during evaluation')
+    plt.xlabel('Detector iteration')
+    plt.ylabel('Number of detected anomalies')
+
+    plt.show()
+
+
 def plot_ops():
-    ...
+    paths = [
+        ('resources/results/worm-dql/eval/worm-dql-a-02.log', 'DQN'),
+        ('resources/results/worm-rl/eval/worm-rl-a-06.log', 'Sarsa'),
+        ('resources/results/worm-rl/eval/worm-rl-a-07.log', 'Q-learning'),
+        ('resources/results/worm-static/eval/worm-static-a-04.log', 'Static')
+    ]
+    plot_detections_type(paths, 'IsolationForestsImpl', 'Isolation Forests, Static IoT device')
+
+    paths = [
+        ('resources/results/worm-dql/eval/worm-dql-a-02.log', 'DQN'),
+        ('resources/results/worm-rl/eval/worm-rl-a-06.log', 'Sarsa'),
+        ('resources/results/worm-rl/eval/worm-rl-a-07.log', 'Q-learning'),
+        ('resources/results/worm-static/eval/worm-static-a-04.log', 'Static')
+    ]
+    plot_detections_type(paths, 'LocalOutlierFactorImpl', 'Local Outlier Factor, Static IoT device')
+
+    paths = [
+        ('resources/results/worm-dql/eval/worm-dql-b-02.log', 'DQN'),
+        ('resources/results/worm-rl/eval/worm-rl-b-06.log', 'Sarsa'),
+        ('resources/results/worm-rl/eval/worm-rl-b-07.log', 'Q-learning'),
+        ('resources/results/worm-static/eval/worm-static-b-04.log', 'Static')
+    ]
+    plot_detections_type(paths, 'IsolationForestsImpl', 'Isolation Forests, Random IoT device')
+
+    paths = [
+        ('resources/results/worm-dql/eval/worm-dql-b-02.log', 'DQN'),
+        ('resources/results/worm-rl/eval/worm-rl-b-06.log', 'Sarsa'),
+        ('resources/results/worm-rl/eval/worm-rl-b-07.log', 'Q-learning'),
+        ('resources/results/worm-static/eval/worm-static-b-04.log', 'Static')
+    ]
+    plot_detections_type(paths, 'LocalOutlierFactorImpl', 'Local Outlier Factor, Random IoT device')
 
 
 if __name__ == '__main__':
+    sns.set_style("whitegrid")
     # df = pd.read_csv('resources/mgr-m1-1/test_record_3_diff.csv')
     # plot_record(df)
 
@@ -99,17 +151,14 @@ if __name__ == '__main__':
     path_dql = 'resources/results/worm-dql/logs'
 
     # logs = file2log(f'{path_dql}/worm-dql-a-02.log')
-    # logs = file2log(f'{path_rl}/worm-rl-a-06.log')
-    plot_learning_curve(Log.into_df(logs))
+    # logs = file2log(f'{path_rl}/worm-rl-a-07.log')
+    # plot_learning_curve(Log.into_df(logs), 'Q-learning')
 
     # text = Eval.read_file('resources/results/worm-rl/eval/worm-rl-a-05.log')
     # eval_arr = [Eval.from_str(line) for line in text]
     # eval_df = Eval.into_df(eval_arr)
     # plot_detections(eval_df)
 
-    # paths = [
-    #     ('resources/results/worm-rl/eval/worm-rl-a-05.log', 'Sarsa'),
-    #     ('resources/results/worm-rl/eval/worm-rl-a-03.log', 'Q-learning'),
-    #     ('resources/results/worm-static/eval/worm-static-a-03.log', 'Static')
-    # ]
-    # plot_detections_type(paths)
+    # plot_ops()
+
+    plot_detections_heatmap('resources/results/worm-rl/eval/worm-rl-a-07.log')

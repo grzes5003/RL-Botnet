@@ -12,4 +12,4 @@ random_IoT = "b"
 05="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; SARSA"
 
 06="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; SARSA"
-06="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; Q-learning"
+07="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; Q-learning"

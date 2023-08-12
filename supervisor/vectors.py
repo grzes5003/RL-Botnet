@@ -202,34 +202,58 @@ class Ops:
         return [Ops.from_str(line) for line in lines]
 
 
-if __name__ == '__main__':
-    file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-03-actions.log'
-    file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-05-actions.log'
-    file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-b-01-actions.log'
+def plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type: str = 'static'):
 
-    res = Ops.file2arr(file_path_rl)
+    # file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-03-actions.log'
+    # file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-05-actions.log'
+    # file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-b-01-actions.log'
+
+    res = Ops.file2arr(file_path_static)
     r1_df = Ops.into_df(res)
-    r1_df['type'] = 'worm-static'
+    r1_df['type'] = 'Static worm'
 
     res = Ops.file2arr(file_path_sarsa)
     r2_df = Ops.into_df(res)
-    r2_df['type'] = 'worm-rl SARSA'
+    r2_df['type'] = 'SARSA'
 
-    res = Ops.file2arr(file_path_static)
+    res = Ops.file2arr(file_path_rl)
     r3_df = Ops.into_df(res)
-    r3_df['type'] = 'worm-rl Q-learning'
+    r3_df['type'] = 'Q-learning'
 
-    df = pd.concat([r1_df, r2_df, r3_df])
+    res = Ops.file2arr(file_path_dqn)
+    r4_df = Ops.into_df(res)
+    r4_df['type'] = 'DQN'
+
+    df = pd.concat([r1_df, r2_df, r3_df, r4_df])
     table = (df.groupby(['operation', 'type']).size() / df.groupby('type').size()).unstack()
     sns.set_theme()
+    plt.figure(figsize=(10, 5))
     # sns.dark_palette("seagreen")
-    sns.heatmap(table, cmap=sns.cm.rocket_r, annot=True, fmt=".2%")
+    heatmap = sns.heatmap(table, cmap="crest", annot=True, fmt=".2%")
 
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.xlabel('Worm type')
     plt.ylabel('Operation')
-    plt.title('Operation distribution for worm types \n (static IoT device)')
-    plt.subplots_adjust(top=.9)
+    heatmap.set_title(f'Operation distribution for worm types \n ({type} IoT device)',
+                  fontdict={'fontsize': 15}, pad=12)
+    # plt.subplots_adjust(top=0.9, bottom=0.2, left=0.2, right=0.9, hspace=0.5,)
     plt.show()
+
+
+if __name__ == '__main__':
+    file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-07-actions.log'
+    file_path_dqn = '../supervisor/resources/results/worm-dql/eval/worm-dql-a-02-actions.log'
+    file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-06-actions.log'
+    file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-actions.log'
+
+    plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Static')
+
+    file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-b-07-actions.log'
+    file_path_dqn = '../supervisor/resources/results/worm-dql/eval/worm-dql-b-02-actions.log'
+    file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-b-06-actions.log'
+    file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-actions.log'
+
+    plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Random')
+
     ...
 
