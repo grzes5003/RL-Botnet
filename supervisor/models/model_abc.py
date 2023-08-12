@@ -1,4 +1,5 @@
 import logging
+import time
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -13,7 +14,7 @@ from supervisor.vectors import Vecs
 class ModelAbc(ABC):
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self, eval: bool = False):
         logging.basicConfig(level=logging.INFO,
                             format=f'[{self.__class__.__name__}][%(asctime)s][%(levelname)s] %(message)s')
 
@@ -21,8 +22,10 @@ class ModelAbc(ABC):
         self._balance = 0
         self._model: OutlierMixin = None
 
-        self._limit = 20
-        self._observations = []
+        self._limit = 10
+        self._observations = [0] * self._limit
+
+        self._eval = eval
 
     @abstractmethod
     def learn(self, df: pd.DataFrame) -> OutlierMixin:
@@ -41,6 +44,7 @@ class ModelAbc(ABC):
             cont = get_container(name=container_name)
         pid = tape(cont, is_ubuntu)
         send_sig(cont, pid, Signals.START)
+        send_sig(cont, pid, Signals.CONT)
         records = collect_constant_data(cont)
         while True:
             record = records.__next__()
@@ -55,9 +59,14 @@ class ModelAbc(ABC):
             print(f'<[{self.__class__.__name__}]{self.observation:.3f};{self.total_observations};{self.anomalies}>')
 
             # keep track of balance and reset if balance is above threshold
-            if self.observation > self.threshold:
+            if self.observation >= self.threshold:
+                if self._eval:
+                    continue
                 send_sig(cont, pid, Signals.RESET)
+                time.sleep(5)
+                send_sig(cont, pid, Signals.CONT)
                 self.reset()
+                records = collect_constant_data(cont)
 
     @property
     def anomalies(self):
@@ -100,4 +109,4 @@ class ModelAbc(ABC):
         return self._balance
 
     def reset(self):
-        self._observations = []
+        self._observations = [0] * self._limit

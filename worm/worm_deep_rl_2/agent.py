@@ -5,6 +5,7 @@ import platform
 import random
 import signal
 import threading
+import time
 from abc import abstractmethod
 
 import numpy as np
@@ -20,7 +21,7 @@ class Agent:
         logging.info('got SIGTERM')
         if self._run:
             return
-        self.done = True
+        self.cooldown_done = True
 
     def handle_sigusr1(self, *_):
         logging.info('got SIGUSR1')
@@ -41,8 +42,8 @@ class Agent:
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15,
-                 min_epsilon=0.15, discount=.9, decay=25, *, run: bool = False, path: str = None):
+    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=50, min_lr=0.10,
+                 min_epsilon=0.15, discount=.9, decay=20, *, run: bool = False, path: str = None):
         logging.basicConfig(level=logging.INFO, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
         self._run = run
         self.path = path
@@ -60,6 +61,7 @@ class Agent:
 
         self.epsilon = None
         self.done = False
+        self.cooldown_done = False
 
         self._qtable_file = '/worm/dqn_model.h5'
 
@@ -83,7 +85,15 @@ class Agent:
 
     def reset(self):
         self.done = False
-        return self.env.reset()
+        result = self.env.reset()
+        if self._run:
+            return result
+        while not self.cooldown_done:
+            time.sleep(.1)
+        time.sleep(.5)
+        logging.info('Cooldown done')
+        return result
+
 
     @abstractmethod
     def choose_action(self, state):
@@ -96,7 +106,7 @@ class Agent:
     def run(self):
         self.epsilon = -1
         logging.info('Running started...')
-        time_step = self.env.reset()
+        time_step = self.reset()
 
         while not self.done:
             action = self.choose_action(time_step.observation)
@@ -130,8 +140,9 @@ class AgentDQN(Agent):
 
     def build_q_network(self):
         model = Sequential()
-        model.add(Dense(64, activation='relu', input_dim=len(self.buckets), name='input_layer'))
-        model.add(Dense(64, activation='relu', name='hidden_layer'))
+        model.add(Dense(8, activation='relu', input_dim=len(self.buckets), name='input_layer'))
+        model.add(Dense(16, activation='relu', name='hidden_layer'))
+        model.add(Dense(8, activation='relu', name='hidden_layer2'))
         model.add(Dense(self.env.action_space.n, activation='linear', name='output_layer'))
         model.compile(optimizer='adam', loss='mean_squared_error')
         return model
@@ -139,7 +150,7 @@ class AgentDQN(Agent):
     def choose_action(self, state):
         if np.random.random() < self.epsilon:
             return self.env.action_space.sample()
-        q_values = self.q_network.predict(np.array([state]))[0]
+        q_values = self.q_network.predict(np.array([state]), verbose=0)[0]
         return np.argmax(q_values)
 
     def update_dqn(self, batch):
@@ -161,10 +172,11 @@ class AgentDQN(Agent):
         for e in range(self.num_episodes):
             print(f'Episode {e} started...')
             reward_sum = 0.0
-            time_step = self.env.reset()
+            time_step = self.reset()
 
             self.epsilon = self.get_epsilon(e)
             self.done = False
+            self.cooldown_done = False
 
             while not self.done:
                 action = self.choose_action(time_step.observation)
@@ -185,7 +197,7 @@ class AgentDQN(Agent):
                 if done:
                     break
 
-                logging.info(f'log:{e};{reward=};{action=};{reward_sum=}')
+                logging.info(f'log:{e};reward={reward.item():.2f};{action=};{reward_sum=}')
         logging.info('Training finished...')
         self.save('dqn_model.h5')
 
@@ -193,13 +205,13 @@ class AgentDQN(Agent):
         if path is None:
             path = self.path
         self.q_network = tf.keras.models.load_model(path)
-        logging.debug('Agent\'s DQN model loaded...')
+        logging.info('Agent\'s DQN model loaded...')
 
     def save(self, path: str = None):
         if path is None:
             path = self.path
         self.q_network.save(path)
-        logging.debug('Agent\'s DQN model saved...')
+        logging.info('Agent\'s DQN model saved...')
 
 
 if __name__ == '__main__':

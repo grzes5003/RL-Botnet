@@ -50,8 +50,9 @@ def generate_diff(file_path: str):
 if __name__ == '__main__':
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # df = collect_data(500, machine_name='mgr-m1-r-02-1')
-    # save_data(df, os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_random.csv'))
-    generate_diff(os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_random.csv'))
+    print('start')
+    # df = collect_data(1000, machine_name='mgr-m1-dql-r-1')
+    # save_data(df, os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_with_qdl.csv'))
+    generate_diff(os.path.join(ROOT_DIR, 'resources/mgr-m1-1/test_record_with_qdl.csv'))
     print('done')
 

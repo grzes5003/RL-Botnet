@@ -22,7 +22,7 @@ class Actions(Enum):
         if self == Actions.PING:
             return 5
         elif self == Actions.NONE:
-            return 1
+            return 10
         elif self == Actions.SCAN:
             return 20 + result * 10
         elif self == Actions.INFECT:

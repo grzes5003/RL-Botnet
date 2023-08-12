@@ -52,6 +52,20 @@ services:
         ipv4_address: 10.0.0.11
     environment:
       - IP_ADDR="10.0.0.11"
+  m1-dql-r:
+    # Deep Q learning worm
+    # using tensorflow in run mode
+    build:
+      context: .
+      dockerfile: dql-run.Dockerfile
+    privileged: true
+    ports:
+      - 5050:80
+    networks:
+      netw:
+        ipv4_address: 10.0.0.11
+    environment:
+      - IP_ADDR="10.0.0.11"
   m3:
     # Static worm
     build:
@@ -76,7 +90,7 @@ services:
       - 5051:81
     networks:
       netw:
-        ipv4_address: 10.0.0.12
+        ipv4_address: 10.0.0.11
   honeypot:
     # Honeypot with several ports and IP addresses open
     build:

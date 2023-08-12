@@ -1,9 +1,13 @@
+import logging
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+logging.basicConfig(level=logging.INFO, format='[HP][%(asctime)s][%(levelname)s] %(message)s')
 
 
 class Server(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
+            logging.info('Request received')
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -16,7 +20,7 @@ class Server(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=Server, *, port=80, address=''):
     server_address = (address, port)
     httpd = server_class(server_address, handler_class)
-    print(f'Starting server on port {port}...')
+    logging.info(f'Starting server on port {port}...')
     httpd.serve_forever()
 
 

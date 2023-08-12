@@ -9,7 +9,7 @@ import logging
 
 
 class Sensor:
-    target_addr = '10.10.10.1'
+    target_addr = '10.0.0.100'
     sleep_time = 5
 
     def __init__(self, _target_addr: str=None):

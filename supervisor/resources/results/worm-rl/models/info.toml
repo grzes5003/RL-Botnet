@@ -10,3 +10,6 @@ random_IoT = "b"
     "updates to the reward; ping=5;none=10;scan=20+result*10;infect=80;fetch_info=5"
 04="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; Q-learning"
 05="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; SARSA"
+
+06="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; SARSA"
+06="buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15, min_epsilon=0.15, discount=.9, decay=25; changed rewards; Q-learning"

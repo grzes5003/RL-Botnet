@@ -95,17 +95,21 @@ if __name__ == '__main__':
     # df = pd.read_csv('resources/mgr-m1-1/test_record_3_diff.csv')
     # plot_record(df)
 
-    # logs = file2log('resources/results/worm-rl/logs/worm-rl-a-02.log')
-    # plot_learning_curve(Log.into_df(logs))
+    path_rl = 'resources/results/worm-rl/logs'
+    path_dql = 'resources/results/worm-dql/logs'
+
+    # logs = file2log(f'{path_dql}/worm-dql-a-02.log')
+    # logs = file2log(f'{path_rl}/worm-rl-a-06.log')
+    plot_learning_curve(Log.into_df(logs))
 
     # text = Eval.read_file('resources/results/worm-rl/eval/worm-rl-a-05.log')
     # eval_arr = [Eval.from_str(line) for line in text]
     # eval_df = Eval.into_df(eval_arr)
     # plot_detections(eval_df)
 
-    paths = [
-        ('resources/results/worm-rl/eval/worm-rl-a-05.log', 'Sarsa'),
-        ('resources/results/worm-rl/eval/worm-rl-a-03.log', 'Q-learning'),
-        ('resources/results/worm-static/eval/worm-static-a-03.log', 'Static')
-    ]
-    plot_detections_type(paths)
+    # paths = [
+    #     ('resources/results/worm-rl/eval/worm-rl-a-05.log', 'Sarsa'),
+    #     ('resources/results/worm-rl/eval/worm-rl-a-03.log', 'Q-learning'),
+    #     ('resources/results/worm-static/eval/worm-static-a-03.log', 'Static')
+    # ]
+    # plot_detections_type(paths)

@@ -51,14 +51,13 @@ class Env(py_environment.PyEnvironment):
 
     def _reset(self):
         self.action_space.reset()
-        time.sleep(.5)
         self.action_cooldown_dict = {action: 0 for action in Actions}
 
         return ts.restart(self._get_obs())
 
     def _step(self, action):
         result = self.action_space.action(action)
-        time.sleep(.5)
+        time.sleep(1)
 
         reward = Actions(action).action_reward() - self.action_cooldown(action) + self.hunger_factor(action)
         if result == -1:
