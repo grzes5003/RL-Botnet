@@ -1,0 +1,6 @@
+cffi
+psutil
+python-nmap
+tf-agents
+paramiko
+numpy

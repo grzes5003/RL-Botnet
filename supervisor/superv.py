@@ -21,12 +21,14 @@ def get_container(clinet: DockerClient = docker.from_env(), name: str = machine_
             raise ConnectionError("Cannot find container")
 
 
-def tape(cont) -> str:
+def tape(cont, is_ubuntu: bool = False) -> str:
     output = cont.exec_run(cmd='ps aux').output.decode('utf-8')
     lines = [line for line in output.splitlines() if proc_name in line and 'sleep' not in line]
     print(lines)
     match lines:
         case [line]:
+            if is_ubuntu:
+                return line.strip().split()[1]
             return line.strip().split()[0]
         case other:
             raise ConnectionError(f"cannot find pid in {other}")

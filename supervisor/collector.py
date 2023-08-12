@@ -26,7 +26,7 @@ def collect_constant_data(cont):
 
     while True:
         record = stats.__next__()
-        print(record)
+        # print(record)
         records.appendleft(Vecs.from_read(record))
         if records[1] == 0:
             continue

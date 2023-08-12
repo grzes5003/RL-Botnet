@@ -4,12 +4,13 @@ EXPOSE 22
 
 RUN echo "root:toor" | chpasswd
 
-RUN apt update && apt install -y openssh-server openssh-client \
-    && mkdir -p /root/.ssh \
-    && chmod 0700 /root/.ssh \
-    && ssh-keygen -A \
-    && echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config \
-    && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
-    && service ssh restart \
+RUN apt update && apt install -y openssh-server openssh-client iputils-ping \
+    && service ssh start \
+    && sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && service ssh restart
 
-ENTRYPOINT ["/bin/sh","-c","sleep infinity"]
+ADD machines/basic_IoT /iot
+ADD worm/worm_deep_rl_2 /worm
+
+RUN pip install -r worm/requirements.txt
+ENTRYPOINT ["/bin/sh","-c", "sleep 2; python /iot/main.py & python /worm/agent.py; sleep infinity"]

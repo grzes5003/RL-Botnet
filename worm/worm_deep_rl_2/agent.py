@@ -12,30 +12,31 @@ from keras.models import Sequential
 from keras.layers import Dense
 import tensorflow as tf
 
-from worm.worm_deep_rl_2 import env
+import env
 
 
 class Agent:
     def handle_sigterm(self, *_):
-        print('got SIGTERM')
+        logging.info('got SIGTERM')
         if self._run:
             return
         self.done = True
 
     def handle_sigusr1(self, *_):
-        print('got SIGUSR1')
+        logging.info('got SIGUSR1')
         if self._run:
             return self.run()
         self.train()
 
     def handle_sigusr2(self, *_):
-        print('got SIGUSR2')
+        logging.info('got SIGUSR2')
         if self._run:
             return
         self.done = True
 
     def sig_handlers(self):
         if platform.system() == 'Linux':
+            logging.info('Setting up signal handlers')
             signal.signal(signal.SIGUSR1, self.handle_sigusr1)
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
@@ -60,23 +61,9 @@ class Agent:
         self.epsilon = None
         self.done = False
 
-        self._qtable_file = '/worm/qtable.npy'
+        self._qtable_file = '/worm/dqn_model.h5'
 
         # [rx_bytes,tx_bytes,rx_packets,tx_packets,ram_usage,cpu_usage]
-        self.upper_bounds = self.env.observation_space().high
-        self.lower_bounds = self.env.observation_space().low
-
-    def discretize_state(self, obs):
-        discretized = list()
-        for i in range(len(obs)):
-            obs[i] = min(obs[i], self.upper_bounds[i])
-            obs[i] = max(obs[i], self.lower_bounds[i])
-
-            scaling = (obs[i] + abs(self.lower_bounds[i])) / (self.upper_bounds[i] - self.lower_bounds[i])
-            new_obs = int(round((self.buckets[i] - 1) * scaling))
-            new_obs = min(self.buckets[i] - 1, max(0, new_obs))
-            discretized.append(new_obs)
-        return tuple(discretized)
 
     def get_epsilon(self, t):
         return max(self.min_epsilon, min(1., 1. - math.log10((t + 1) / self.decay)))
@@ -139,7 +126,7 @@ class AgentDQN(Agent):
         if self._run:
             logging.info('Agent in run mode')
             self.load(path=self.path)
-        logging.info('Q-learning Agent initialized...')
+        logging.info('DQN Agent initialized...')
 
     def build_q_network(self):
         model = Sequential()
@@ -156,7 +143,7 @@ class AgentDQN(Agent):
         return np.argmax(q_values)
 
     def update_dqn(self, batch):
-        states, actions, rewards, new_states, dones = batch
+        states, actions, rewards, new_states, dones = zip(*batch)
 
         q_values = self.q_network.predict(np.array(states))
         q_values_new = self.q_network.predict(np.array(new_states))
@@ -190,7 +177,8 @@ class AgentDQN(Agent):
 
                 self.replay_memory.append((time_step.observation, action, reward, new_state, done))
                 if len(self.replay_memory) > self.batch_size:
-                    batch = np.random.choice(self.replay_memory, size=self.batch_size, replace=False)
+                    indices = np.random.choice(len(self.replay_memory), size=self.batch_size, replace=False)
+                    batch = [self.replay_memory[i] for i in indices]
                     self.update_dqn(batch)
 
                 time_step = next_time_step
@@ -199,7 +187,7 @@ class AgentDQN(Agent):
 
                 logging.info(f'log:{e};{reward=};{action=};{reward_sum=}')
         logging.info('Training finished...')
-        self.save('dqn_model')
+        self.save('dqn_model.h5')
 
     def load(self, path: str = None):
         if path is None:

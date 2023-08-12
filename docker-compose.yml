@@ -38,12 +38,13 @@ services:
         ipv4_address: 10.0.0.11
     environment:
       - IP_ADDR="10.0.0.11"
-  m3:
-    # Static worm
+  m1-dql:
+    # Deep Q learning worm
+    # using tensorflow
     build:
       context: .
-      dockerfile: Dockerfile
-      target: image-infected-static
+      dockerfile: dql.Dockerfile
+    privileged: true
     ports:
       - 5050:80
     networks:
@@ -51,13 +52,12 @@ services:
         ipv4_address: 10.0.0.11
     environment:
       - IP_ADDR="10.0.0.11"
-  m4:
-    # Deep Q learning worm
-    # using tensorflow
+  m3:
+    # Static worm
     build:
-        context: .
-        dockerfile: dql.Dockerfile
-    privileged: true
+      context: .
+      dockerfile: Dockerfile
+      target: image-infected-static
     ports:
       - 5050:80
     networks:

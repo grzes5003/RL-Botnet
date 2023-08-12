@@ -32,14 +32,14 @@ class ModelAbc(ABC):
     def detect(self, df: pd.DataFrame):
         raise NotImplementedError
 
-    def listener(self, container_name: str = None):
+    def listener(self, container_name: str = None, is_ubuntu: bool = False):
         if self._model is None:
             raise ValueError('Model is not initialized')
         if container_name is None:
             cont = get_container()
         else:
             cont = get_container(name=container_name)
-        pid = tape(cont)
+        pid = tape(cont, is_ubuntu)
         send_sig(cont, pid, Signals.START)
         records = collect_constant_data(cont)
         while True:
@@ -52,7 +52,7 @@ class ModelAbc(ABC):
             else:
                 self.observation = 0
             self.inc_balance()
-            print(f'<[{self.__class__.__name__}]{self.observation};{self.total_observations};{self.anomalies}>')
+            print(f'<[{self.__class__.__name__}]{self.observation:.3f};{self.total_observations};{self.anomalies}>')
 
             # keep track of balance and reset if balance is above threshold
             if self.observation > self.threshold:

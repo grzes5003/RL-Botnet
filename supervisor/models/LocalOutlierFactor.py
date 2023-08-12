@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 import pandas as pd
@@ -24,12 +25,23 @@ class LocalOutlierFactorImpl(ModelAbc):
 
 if __name__ == '__main__':
     cont_name = None
-    if len(sys.argv) == 3 and sys.argv[1] in ['-n', '--name']:
-        cont_name = sys.argv[2]
+    is_ubuntu = False
+
+    parser = argparse.ArgumentParser(description='Local Outlier Factor')
+    parser.add_argument('-n', '--name', type=str, help='container name', required=False)
+    parser.add_argument('-u', '--ubuntu', action='store_true', help='is ubuntu', required=False)
+    args = parser.parse_args()
+
+    if args.name is not None:
+        cont_name = args.name
+    if args.ubuntu:
+        is_ubuntu = True
 
     df = pd.read_csv('../resources/mgr-m1-1/test_record_3_diff.csv')
     detector = LocalOutlierFactorImpl()
+    # if is_ubuntu:
+    #     detector.threshold = .099
 
     detector.learn(df)
-    detector.listener(container_name=cont_name)
+    detector.listener(container_name=cont_name, is_ubuntu=is_ubuntu)
     print('done')

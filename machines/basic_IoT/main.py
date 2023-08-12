@@ -60,12 +60,11 @@ class Sensor:
 
     @staticmethod
     def read_sensor() -> bytes:
-        match platform.system():
-            case 'Linux':
-                return os.urandom(100)
-            case other:
-                raise NotImplementedError(f'Other platform {other}')
-                # return b'12312313'
+        if platform.system() == 'Linux':
+            return os.urandom(100)
+        else:
+            raise NotImplementedError(f'Other platform {platform.system()}')
+            # return b'12312313'
 
     def supervisor(self):
         print("11")

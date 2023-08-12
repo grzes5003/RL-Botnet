@@ -1,19 +1,18 @@
 import collections
+import logging
 import threading
 import time
-import types
 
 import numpy as np
 import psutil
-from scipy.special._precompute.cosine_cdf import ts
+from tf_agents.trajectories import time_step as ts
 from tf_agents.environments import py_environment
 from tf_agents.specs import BoundedArraySpec
 
-from worm.worm_deep_rl_2.actions import ActionBot, Actions
+from actions import ActionBot, Actions
 
 
 class Env(py_environment.PyEnvironment):
-
     def __init__(self):
         self.low = [0, 0, 0, 0, -10000, 0]
         self.high = [100, 100, 10, 10, 10000, 1500000]
@@ -33,9 +32,12 @@ class Env(py_environment.PyEnvironment):
         )
 
         self.threshold = 5
-        self._action_space = ActionBot()
+        self.action_space = ActionBot()
         self.lock = threading.Lock()
         self.observation = None
+
+        self.fetcher_handle = self.observer()
+        self.fetcher_handle.start()
 
     @property
     def n(self):
@@ -48,14 +50,14 @@ class Env(py_environment.PyEnvironment):
         return self._observation_spec
 
     def _reset(self):
-        self._action_space.reset()
+        self.action_space.reset()
         time.sleep(.5)
         self.action_cooldown_dict = {action: 0 for action in Actions}
 
         return ts.restart(self._get_obs())
 
     def _step(self, action):
-        result = self._action_space.action(action)
+        result = self.action_space.action(action)
         time.sleep(.5)
 
         reward = Actions(action).action_reward() - self.action_cooldown(action) + self.hunger_factor(action)
@@ -96,14 +98,15 @@ class Env(py_environment.PyEnvironment):
 
         return min(delta - self.threshold, 1) * p_100
 
-
-
     ##########################################
     #           Support methods              #
     ##########################################
 
-    def _observer(self):
+    def observer(self):
+        # logging.info("Starting observer thread")
+
         def fetcher():
+            # logging.info("Starting fetcher thread")
             records = collections.deque(2 * [None], 2)
 
             while True:
@@ -112,6 +115,7 @@ class Env(py_environment.PyEnvironment):
                     continue
                 with self.lock:
                     self.observation = records[0] - records[1]
+                    # logging.info(f"New observation: {self.observation}")
                 time.sleep(.5)
 
         return threading.Thread(target=fetcher, daemon=True)
@@ -144,4 +148,3 @@ class Env(py_environment.PyEnvironment):
     @staticmethod
     def get_env():
         return np.array([*Env.net_bytes(), *Env.net_packets(), Env.ram_usage(), Env.cpu_usage()])
-

@@ -19,19 +19,18 @@ class Actions(Enum):
         return random.choice(list(cls)).value
 
     def action_reward(self, result: int = 0):
-        match self:
-            case Actions.PING:
-                return 5
-            case Actions.NONE:
-                return 10
-            case Actions.SCAN:
-                return 20 + result * 10
-            case Actions.INFECT:
-                return 80
-            case Actions.FETCH_INFO:
-                return 5
-            case _:
-                raise ValueError(f'Action {self} not found')
+        if self == Actions.PING:
+            return 5
+        elif self == Actions.NONE:
+            return 1
+        elif self == Actions.SCAN:
+            return 20 + result * 10
+        elif self == Actions.INFECT:
+            return 80
+        elif self == Actions.FETCH_INFO:
+            return 5
+        else:
+            raise ValueError(f'Action {self} not found')
 
 
 class ActionBot:
@@ -105,7 +104,7 @@ class ActionBot:
         logging.info('Idling...')
 
     def reset(self):
-        self.thread_pool.shutdown(wait=False, cancel_futures=True)
+        self.thread_pool.shutdown(wait=False)
         if self.ping_proc is not None and self.ping_proc.poll() is None:
             self.ping_proc.kill()
             self.ping_proc = None
@@ -125,22 +124,21 @@ class ActionBot:
         if self._is_busy():
             return -1
 
-        match action:
-            case Actions.SCAN.value:
-                self.scan_proc = self.thread_pool.submit(self.scan_action)
-            case Actions.PING.value:
-                if self.ping_proc is None:
-                    self.thread_pool.submit(self.ping_action)
-            case Actions.NONE.value:
-                self.none()
-            case Actions.INFECT.value:
-                if len(self.known_hosts) == 0:
-                    return -2
-                self.thread_pool.submit(self.infect_action)
-            case Actions.FETCH_INFO.value:
-                self.thread_pool.submit(self.fetch_info_action)
-            case _:
-                raise ValueError(f'Action {action} not found')
+        if action == Actions.SCAN.value:
+            self.scan_proc = self.thread_pool.submit(self.scan_action)
+        elif action == Actions.PING.value:
+            if self.ping_proc is None:
+                self.thread_pool.submit(self.ping_action)
+        elif action == Actions.NONE.value:
+            self.none()
+        elif action == Actions.INFECT.value:
+            if len(self.known_hosts) == 0:
+                return -2
+            self.thread_pool.submit(self.infect_action)
+        elif action == Actions.FETCH_INFO.value:
+            self.thread_pool.submit(self.fetch_info_action)
+        else:
+            raise ValueError(f'Action {action} not found')
         return 0
 
     @property
