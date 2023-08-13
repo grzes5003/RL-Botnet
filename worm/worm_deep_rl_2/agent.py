@@ -42,7 +42,7 @@ class Agent:
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=50, min_lr=0.10,
+    def __init__(self, buckets=(5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5), num_episodes=50, min_lr=0.10,
                  min_epsilon=0.15, discount=.9, decay=20, *, run: bool = False, path: str = None):
         logging.basicConfig(level=logging.INFO, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
         self._run = run

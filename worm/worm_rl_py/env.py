@@ -2,6 +2,7 @@ import collections
 import dataclasses
 import threading
 import time
+from copy import deepcopy
 
 import numpy as np
 import psutil
@@ -12,8 +13,8 @@ from action import ActionBot, Actions
 class Env:
     @dataclasses.dataclass
     class ObservationSpace:
-        low = [0, 0, 0, 0, -10000, 0]
-        high = [100, 100, 10, 10, 10000, 1500000]
+        low = [0, 0, 0, 0, -10000, 0, 0, 0, 0, 0, 0]
+        high = [100, 100, 10, 10, 10000, 1500000, 2, 2, 2, 2, 2]
 
     def __init__(self):
         self._n = 6
@@ -44,8 +45,17 @@ class Env:
         return psutil.net_io_counters().bytes_recv, \
             psutil.net_io_counters().bytes_sent
 
-    @staticmethod
-    def get_env():
+    def last_actions(self):
+        if all([not action for action in self.action_cooldown_dict.values()]):
+            action_cooldown = deepcopy(self.action_cooldown_dict)
+            action_cooldown[Actions.NONE] = 20
+            return [action_cooldown[action] for action in Actions]
+
+        epoch = time.time()
+        return [0 if self.action_cooldown_dict[action] == 0 else epoch - self.action_cooldown_dict[action]
+                for action in Actions]
+
+    def get_env(self):
         return np.array([*Env.net_bytes(), *Env.net_packets(), Env.ram_usage(), Env.cpu_usage()])
 
     def diff_observation(self, other):
@@ -61,13 +71,10 @@ class Env:
                 if records[1] is None:
                     continue
                 with self.lock:
-                    self.observation = records[0] - records[1]
+                    self.observation = [*(records[0] - records[1]), *self.last_actions()]
                 time.sleep(.5)
 
         return threading.Thread(target=fetcher, daemon=True)
-
-    def get_obs_diff(self):
-        return self.observation - self.get_env()
 
     def sample(self):
         return self.action_space.sample()

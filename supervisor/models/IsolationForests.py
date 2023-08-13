@@ -35,6 +35,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     filepath = '../resources/mgr-m1-1/test_record_long_diff.csv'
+    filepath = '../resources/mgr-m1-1/test_record_3_diff.csv'
     if args.name is not None:
         cont_name = args.name
     if args.ubuntu:

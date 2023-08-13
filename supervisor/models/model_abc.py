@@ -63,6 +63,9 @@ class ModelAbc(ABC):
                 if self._eval:
                     continue
                 send_sig(cont, pid, Signals.RESET)
+                if not is_ubuntu:
+                    self.reset()
+                    continue
                 time.sleep(5)
                 send_sig(cont, pid, Signals.CONT)
                 self.reset()

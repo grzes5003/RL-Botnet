@@ -39,7 +39,7 @@ class Agent:
             signal.signal(signal.SIGUSR2, self.handle_sigusr2)
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def __init__(self, buckets=(5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15,
+    def __init__(self, buckets=(5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5), num_episodes=300, min_lr=0.15,
                  min_epsilon=0.15, discount=.9, decay=25, *, run: bool = False, path: str = None):
         logging.basicConfig(level=logging.INFO, format='[WORM][%(asctime)s][%(levelname)s] %(message)s')
         self._run = run
@@ -148,7 +148,6 @@ class AgentSarsa(Agent):
     def train(self):
         logging.info('Training started...')
         for e in range(self.num_episodes):
-            print(f'Episode {e} started...')
             reward_sum = 0.0
             current_state = self.discretize_state(self.reset())
 
@@ -159,8 +158,10 @@ class AgentSarsa(Agent):
             while not self.done:
                 action = self.choose_action(current_state)
                 obs, reward, _, _, _ = self.env.step(action)
+                logging.info(f'{obs=}')
                 reward_sum += reward
                 new_state = self.discretize_state(obs)
+                logging.info(f'{new_state=}')
                 new_action = self.choose_action(new_state)
                 self.update_sarsa(current_state, action, reward, new_state, new_action)
                 current_state = new_state
@@ -215,7 +216,9 @@ class AgentQ(Agent):
             while not self.done:
                 action = self.choose_action(current_state)
                 obs, reward, _, _, _ = self.env.step(action)
+                logging.info(f'obs: {obs[:6]}, {obs[6:]}')
                 new_state = self.discretize_state(obs)
+                logging.info(f'new_state: {new_state[:6]},{new_state[6:]}')
                 self.update_q(current_state, action, reward, new_state)
                 current_state = new_state
                 reward_sum += reward
@@ -241,7 +244,10 @@ class TestAgent(unittest.TestCase):
         self.assertEquals(Agent(buckets=(10, 10, 10, 10, 10, 10))
                           .discretize_state([51.0, 50.1, 5.1, 5.1, 0.1, 750000.1]),
                           (5, 5, 5, 5, 5, 5))
-
+    # 54.0,148.0,1.0,2.0,-4096.0,1116400.0
+    def test_discretize_state2(self):
+        res = Agent(buckets=(5,5,5,5,5,5)).discretize_state([54.0,148.0,1.0,2.0,-4096.0,1116400.0])
+        ...
 
 if __name__ == '__main__':
     print('Agent starting...')
