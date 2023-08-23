@@ -240,20 +240,89 @@ def plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, 
     plt.show()
 
 
+def plot_dist(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type: str = 'static'):
+    res = Ops.file2arr(file_path_static)
+    r1_df = Ops.into_df(res)
+    r1_df['type'] = 'Static worm'
+
+    res = Ops.file2arr(file_path_sarsa)
+    r2_df = Ops.into_df(res)
+    r2_df['type'] = 'SARSA'
+
+    res = Ops.file2arr(file_path_rl)
+    r3_df = Ops.into_df(res)
+    r3_df['type'] = 'Q-learning'
+
+    res = Ops.file2arr(file_path_dqn)
+    r4_df = Ops.into_df(res)
+    r4_df['type'] = 'DQN'
+
+    df = pd.concat([r1_df, r2_df, r3_df, r4_df])
+    table = (df.groupby(['operation', 'type']).size() / df.groupby('type').size()).unstack()
+
+    # melted_df = pd.melt(table, id_vars='operation', var_name='model', value_name='value')
+    # melted_df.columns = ['action_type', 'model', 'value']
+    #
+    # melted_df = melted_df.rename(columns={'operation': 'action_type'})
+
+    table = table.stack().reset_index().rename(columns={0: 'value'})
+
+    sns.displot(table, x="value", col="operation", hue="type", kind="kde", common_norm=False)
+    plt.show()
+
+def plot_dist2(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type: str = 'static'):
+    order = ['NONE', 'PING', 'SCAN', 'INFECT', 'FETCH_INFO']
+
+    palette = sns.color_palette("coolwarm", 3)
+    res = Ops.file2arr(file_path_static)
+    r1_df = Ops.into_df(res)
+    r1_df['type'] = 'Static worm'
+
+    res = Ops.file2arr(file_path_sarsa)
+    r2_df = Ops.into_df(res)
+    r2_df['type'] = 'SARSA'
+
+    res = Ops.file2arr(file_path_rl)
+    r3_df = Ops.into_df(res)
+    r3_df['type'] = 'Q-learning'
+
+    res = Ops.file2arr(file_path_dqn)
+    r4_df = Ops.into_df(res)
+    r4_df['type'] = 'DQN'
+
+    df = pd.concat([r2_df, r3_df, r4_df])
+
+    sns.catplot(df.reset_index(), x="operation", y="index", hue="type", kind="violin")
+    # sns.catplot(df.reset_index(), x="operation", y="index", hue="type", kind="swarm")
+    # sns.catplot(df.reset_index(), x="operation", y="index", hue="type", order=order)
+    # sns.displot(df, x="value", hue="type", kind="kde", common_norm=False, palette=palette)
+    plt.ylim(0, 450)
+
+    # plt.tight_layout()
+    plt.ylabel('Iteration')
+    plt.xlabel('Action type')
+    # plt.title(f'Operation distribution for worm types \n ({type} IoT device)', fontdict={'fontsize': 15}, pad=12)
+    # plot.set_titles(f'Operation distribution for worm types \n ({type} IoT device)',
+    #               fontdict={'fontsize': 15}, pad=12)
+    plt.show()
+
+
 if __name__ == '__main__':
     file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-07-actions.log'
     file_path_dqn = '../supervisor/resources/results/worm-dql/eval/worm-dql-a-02-actions.log'
     file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-a-06-actions.log'
     file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-actions.log'
 
-    plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Static')
+    # plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Static')
+    plot_dist2(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Static')
 
     file_path_rl = '../supervisor/resources/results/worm-rl/eval/worm-rl-b-07-actions.log'
     file_path_dqn = '../supervisor/resources/results/worm-dql/eval/worm-dql-b-02-actions.log'
     file_path_sarsa = '../supervisor/resources/results/worm-rl/eval/worm-rl-b-06-actions.log'
     file_path_static = '../supervisor/resources/results/worm-static/eval/worm-static-actions.log'
 
-    plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Random')
+    # plot_static(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Random')
+    plot_dist2(file_path_rl, file_path_sarsa, file_path_dqn, file_path_static, type='Random')
 
     ...
 
